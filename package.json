@@ -5,13 +5,10 @@
   "main": "./out/main/index.js",
   "author": "",
   "scripts": {
-    "build:rust": "cd mft_scanner && cargo build --release",
-    "predev": "npm run build:rust",
-    "prebuild": "npm run build:rust",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "package": "npm run build:rust && electron-vite build && electron-builder --win --x64",
+    "package": "electron-vite build && electron-builder --win --x64",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -37,12 +34,6 @@
     "files": [
       "out/**/*",
       "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "mft_scanner/target/release/mft_scanner.exe",
-        "to": "mft_scanner.exe"
-      }
     ],
     "win": {
       "target": "nsis"

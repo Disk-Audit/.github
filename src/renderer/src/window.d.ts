@@ -1,9 +1,9 @@
-import type { FsNode, ScanProgress, DriveInfo } from './types';
+import type { FsNode, ScanProgress } from './types';
 
 declare global {
   interface Window {
     api: {
-      listDrives: () => Promise<DriveInfo[]>;
+      chooseFolder: () => Promise<string | null>;
       scan: (folderPath: string) => Promise<FsNode>;
       onScanProgress: (callback: (progress: ScanProgress) => void) => () => void;
     };
