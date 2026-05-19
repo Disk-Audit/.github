@@ -4,6 +4,7 @@ import type {
   ScanProgress as ScanProgressType,
   DriveInfo
 } from './types';
+import { formatBytes } from './types';
 import { Treemap } from './components/Treemap';
 import { FileList } from './components/FileList';
 import { Breadcrumbs } from './components/Breadcrumbs';
@@ -17,6 +18,10 @@ function findNode(root: FsNode, targetPath: string): FsNode | null {
     if (found) return found;
   }
   return null;
+}
+
+function driveTypeLabel(t: DriveInfo['driveType']): string {
+  return t === 'removable' ? 'Removable Disk' : 'Local Disk';
 }
 
 export function App(): JSX.Element {
@@ -97,18 +102,53 @@ export function App(): JSX.Element {
           <p className="hint">No drives detected.</p>
         ) : (
           <div className="drive-picker">
-            {drives.map((d) => (
-              <button
-                key={d.letter}
-                className="drive-btn"
-                onClick={() => startScan(d.letter + '\\')}
-              >
-                <span className="drive-btn-letter">{d.letter}</span>
-                <span className="drive-btn-label">
-                  {d.label || 'Local Disk'}
-                </span>
-              </button>
-            ))}
+            {drives.map((d) => {
+              const used = Math.max(0, d.totalBytes - d.freeBytes);
+              const pct = d.totalBytes > 0 ? (used / d.totalBytes) * 100 : 0;
+              const isFull = pct >= 90;
+              const typeLabel = driveTypeLabel(d.driveType);
+              const displayName = d.label || typeLabel;
+              const subLine = d.label ? typeLabel : '';
+
+              return (
+                <button
+                  key={d.letter}
+                  className="drive-btn"
+                  onClick={() => startScan(d.letter + '\\')}
+                >
+                  <div className="drive-btn-letter">{d.letter}</div>
+                  <div className="drive-btn-info">
+                    <div className="drive-btn-row1">
+                      <span className="drive-btn-name">{displayName}</span>
+                      {d.fileSystem && (
+                        <span className="drive-btn-fs">{d.fileSystem}</span>
+                      )}
+                    </div>
+                    {subLine && (
+                      <div className="drive-btn-sub">{subLine}</div>
+                    )}
+                    {d.totalBytes > 0 ? (
+                      <>
+                        <div className="drive-btn-bar">
+                          <div
+                            className={`drive-btn-bar-fill${isFull ? ' full' : ''}`}
+                            style={{ width: `${Math.min(100, pct)}%` }}
+                          />
+                        </div>
+                        <div className="drive-btn-usage">
+                          {formatBytes(d.freeBytes)} free of{' '}
+                          {formatBytes(d.totalBytes)}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="drive-btn-usage drive-btn-usage-dim">
+                        Size unavailable
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

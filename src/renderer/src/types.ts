@@ -17,6 +17,10 @@ export interface ScanProgress {
 export interface DriveInfo {
   letter: string;
   label: string;
+  totalBytes: number;
+  freeBytes: number;
+  fileSystem: string;
+  driveType: 'fixed' | 'removable';
 }
 
 export function formatBytes(b: number): string {
