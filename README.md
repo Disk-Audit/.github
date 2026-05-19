@@ -7,13 +7,7 @@ A Windows app that scans a folder or drive and shows you what's eating your spac
 ---
 
 ## Installing
-
-1. Download **`Disk Analyzer Setup 0.1.0.exe`**.
-2. Double-click it.
-3. If Windows shows a "Windows protected your PC" warning, click **More info** → **Run anyway**. (The installer isn't code-signed yet, so Windows is being cautious.)
-4. Follow the prompts. Disk Analyzer will appear in your Start menu when it's done.
-
-That's it — no extra software to install, no Node, nothing else to download.
+Download the latest installer from the [Releases page](https://github.com/yourname/disk-analyzer/releases/latest).
 
 ---
 
