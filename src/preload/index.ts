@@ -7,7 +7,7 @@ interface ScanProgress {
 }
 
 const api = {
-  chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('choose-folder'),
+  listDrives: () => ipcRenderer.invoke('list-drives'),
   scan: (folderPath: string) => ipcRenderer.invoke('scan', folderPath),
   onScanProgress: (callback: (progress: ScanProgress) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, progress: ScanProgress): void =>

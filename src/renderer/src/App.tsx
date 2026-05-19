@@ -1,108 +1,248 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import type { FsNode, ScanProgress as ScanProgressType } from './types';
-import { Treemap } from './components/Treemap';
-import { FileList } from './components/FileList';
-import { Breadcrumbs } from './components/Breadcrumbs';
+import type {
+  FsNode,
+  ScanProgress as ScanProgressType,
+  DriveInfo,
+  Kind
+} from './types';
+import { findByPath, rollupByKind, countFiles } from './types';
+import { Welcome } from './components/Welcome';
 import { ScanProgress } from './components/ScanProgress';
+import { Breadcrumbs } from './components/Breadcrumbs';
+import { Treemap, type ColorMode } from './components/Treemap';
+import { FileList } from './components/FileList';
+import { FillStrip } from './components/FillStrip';
+import { Legend } from './components/Legend';
+import { Logo } from './components/Logo';
 
-function findNode(root: FsNode, targetPath: string): FsNode | null {
-  if (root.path === targetPath) return root;
-  if (!root.children) return null;
-  for (const child of root.children) {
-    const found = findNode(child, targetPath);
-    if (found) return found;
-  }
-  return null;
-}
+type Stage = 'welcome' | 'scanning' | 'results';
 
 export function App(): JSX.Element {
+  // ── App-level state ─────────────────────────────────────────────────────
+  const [stage, setStage] = useState<Stage>('welcome');
   const [root, setRoot] = useState<FsNode | null>(null);
   const [currentPath, setCurrentPath] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const [progress, setProgress] = useState<ScanProgressType>({
+  const [scanProgress, setScanProgress] = useState<ScanProgressType>({
     bytes: 0,
     files: 0,
     currentPath: ''
   });
   const [error, setError] = useState<string | null>(null);
+  const [drives, setDrives] = useState<DriveInfo[]>([]);
+  const [drivesLoaded, setDrivesLoaded] = useState(false);
+  const [activeDrive, setActiveDrive] = useState<DriveInfo | null>(null);
+  const [scanElapsedMs, setScanElapsedMs] = useState(0);
 
+  // Results-view state
+  const [focusKind, setFocusKind] = useState<Kind | null>(null);
+  const [colorMode, setColorMode] = useState<ColorMode>('type');
+  const [depthLimit, setDepthLimit] = useState<3 | 4 | 5>(4);
+
+  // ── Wire progress events ────────────────────────────────────────────────
   useEffect(() => {
-    const unsub = window.api.onScanProgress((p) => setProgress(p));
+    const unsub = window.api.onScanProgress((p) => setScanProgress(p));
     return unsub;
   }, []);
 
+  // ── Load drives on mount ────────────────────────────────────────────────
+  useEffect(() => {
+    window.api
+      .listDrives()
+      .then(setDrives)
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : String(e))
+      )
+      .finally(() => setDrivesLoaded(true));
+  }, []);
+
+  // ── Navigation ──────────────────────────────────────────────────────────
   const currentNode = useMemo(() => {
     if (!root) return null;
     if (!currentPath) return root;
-    return findNode(root, currentPath) || root;
+    return findByPath(root, currentPath) || root;
   }, [root, currentPath]);
 
-  const handleSelectFolder = useCallback(async () => {
+  const handleNavigate = useCallback((p: string) => setCurrentPath(p), []);
+
+  // ── Start a scan ────────────────────────────────────────────────────────
+  const startScan = useCallback(
+    async (drivePath: string) => {
+      setError(null);
+      const drive =
+        drives.find((d) => drivePath.startsWith(d.letter)) || null;
+      setActiveDrive(drive);
+      setStage('scanning');
+      setScanProgress({ bytes: 0, files: 0, currentPath: drivePath });
+
+      const t0 = Date.now();
+      try {
+        const result = await window.api.scan(drivePath);
+        setRoot(result);
+        setCurrentPath(result.path);
+        setScanElapsedMs(Date.now() - t0);
+        setStage('results');
+        setFocusKind(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+        setStage('welcome');
+      }
+    },
+    [drives]
+  );
+
+  // ── Reset to welcome ────────────────────────────────────────────────────
+  const reset = useCallback(() => {
+    setRoot(null);
+    setCurrentPath(null);
     setError(null);
-    const folder = await window.api.chooseFolder();
-    if (!folder) return;
-    setScanning(true);
-    setProgress({ bytes: 0, files: 0, currentPath: folder });
-    try {
-      const result = await window.api.scan(folder);
-      setRoot(result);
-      setCurrentPath(result.path);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setScanning(false);
-    }
+    setFocusKind(null);
+    setStage('welcome');
   }, []);
 
-  if (scanning) {
-    return <ScanProgress {...progress} />;
-  }
+  // ── Rollups for the results view ────────────────────────────────────────
+  const currentRollup = useMemo(
+    () => (currentNode ? rollupByKind(currentNode) : {}),
+    [currentNode]
+  );
+  const driveRollup = useMemo(
+    () => (root ? rollupByKind(root) : {}),
+    [root]
+  );
 
-  if (error) {
+  // ── Render by stage ─────────────────────────────────────────────────────
+
+  if (stage === 'welcome' || !root || !currentNode) {
     return (
-      <div className="welcome">
-        <h1>Scan failed</h1>
-        <p className="error">{error}</p>
-        <button onClick={handleSelectFolder}>Try again</button>
-      </div>
+      <Welcome
+        drives={drives}
+        drivesLoaded={drivesLoaded}
+        error={error}
+        onStart={startScan}
+      />
     );
   }
 
-  if (!root || !currentNode) {
+  if (stage === 'scanning') {
     return (
-      <div className="welcome">
-        <div className="logo">▮▯▮</div>
-        <h1>Disk Analyzer</h1>
-        <p>Pick a folder or drive to see what's eating your space.</p>
-        <button className="primary" onClick={handleSelectFolder}>
-          Choose folder…
-        </button>
-        <p className="hint">
-          Tip: scan an entire drive by selecting <code>C:\</code>, or pick a single
-          folder to narrow it down.
-        </p>
-      </div>
+      <ScanProgress
+        drivePath={
+          activeDrive ? `${activeDrive.letter}\\` : scanProgress.currentPath
+        }
+        bytes={scanProgress.bytes}
+        files={scanProgress.files}
+        currentPath={scanProgress.currentPath}
+      />
     );
   }
+
+  // ── Results ─────────────────────────────────────────────────────────────
+  const driveForStrip: DriveInfo =
+    activeDrive || {
+      letter: root.path.charAt(0) + ':',
+      label: '',
+      totalBytes: root.size,
+      freeBytes: 0,
+      fileSystem: '',
+      driveType: 'fixed'
+    };
+
+  const totalFiles = countFiles(root);
 
   return (
-    <div className="app">
-      <header>
+    <div className="shell fade-in">
+      <div className="app-header">
+        <div className="brand">
+          <span className="brand-mark"><Logo size={18} /></span>
+          <span>DISK</span>
+        </div>
         <Breadcrumbs
           path={currentNode.path}
           rootPath={root.path}
-          onNavigate={setCurrentPath}
+          onNavigate={handleNavigate}
         />
-        <button onClick={handleSelectFolder}>New scan</button>
-      </header>
-      <main>
-        <div className="treemap-pane">
-          <Treemap node={currentNode} onSelect={setCurrentPath} />
+        <div className="actions">
+          <button
+            className="btn"
+            onClick={() => setFocusKind(null)}
+            disabled={focusKind === null}
+          >
+            {focusKind ? 'Clear filter' : 'No filter'}
+          </button>
+          <button className="btn primary" onClick={reset}>
+            New scan
+          </button>
         </div>
-        <div className="list-pane">
-          <FileList node={currentNode} onSelect={setCurrentPath} />
-        </div>
-      </main>
+      </div>
+
+      <FillStrip rollup={driveRollup} drive={driveForStrip} />
+
+      <div className="results">
+        <Legend
+          rollup={currentRollup}
+          focusKind={focusKind}
+          setFocusKind={setFocusKind}
+        />
+
+        <section className="treemap-pane">
+          <div className="treemap-toolbar">
+            <span className="label">color</span>
+            <div className="seg-group">
+              {(['type', 'depth', 'heat'] as ColorMode[]).map((m) => (
+                <button
+                  key={m}
+                  className={'seg-btn' + (colorMode === m ? ' active' : '')}
+                  onClick={() => setColorMode(m)}
+                >
+                  {m === 'type' ? 'Type' : m === 'depth' ? 'Folder' : 'Heat'}
+                </button>
+              ))}
+            </div>
+            <span style={{ width: 12 }} />
+            <span className="label">depth</span>
+            <div className="seg-group">
+              {([3, 4, 5] as const).map((n) => (
+                <button
+                  key={n}
+                  className={'seg-btn' + (depthLimit === n ? ' active' : '')}
+                  onClick={() => setDepthLimit(n)}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <span className="spacer" />
+            <span className="crumb-mini">
+              {focusKind
+                ? `filter: ${focusKind} only`
+                : 'click a tile to drill in'}
+            </span>
+          </div>
+          <Treemap
+            node={currentNode}
+            mode={colorMode}
+            focusKind={focusKind}
+            onNavigate={handleNavigate}
+            depthLimit={depthLimit}
+          />
+        </section>
+
+        <FileList
+          node={currentNode}
+          focusKind={focusKind}
+          onNavigate={handleNavigate}
+        />
+      </div>
+
+      <div className="statusbar">
+        <span className="ok">●</span>
+        <span>scan complete</span>
+        <span className="sep" />
+        <span className="path">{currentNode.path}</span>
+        <span className="spacer" />
+        <span>{totalFiles.toLocaleString()} files indexed</span>
+        <span className="sep" />
+        <span>scan time {(scanElapsedMs / 1000).toFixed(1)}s</span>
+      </div>
     </div>
   );
 }
