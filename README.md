@@ -58,4 +58,4 @@ These folders are managed by Windows in unusual ways and occasionally cause hicc
 
 ## License
 
-MIT — do whatever you want with it.
+Released under the [PolyForm Noncommercial License 1.0.0](LICENSE). In plain English: use it, share it, modify it, build on it — just don't sell it or bundle it into something you charge for. See the `LICENSE` file for the full terms.
