@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import type { FsNode, ScanProgress as ScanProgressType } from './types';
+import type {
+  FsNode,
+  ScanProgress as ScanProgressType,
+  DriveInfo
+} from './types';
 import { Treemap } from './components/Treemap';
 import { FileList } from './components/FileList';
 import { Breadcrumbs } from './components/Breadcrumbs';
@@ -25,10 +29,19 @@ export function App(): JSX.Element {
     currentPath: ''
   });
   const [error, setError] = useState<string | null>(null);
+  const [drives, setDrives] = useState<DriveInfo[]>([]);
+  const [drivesLoaded, setDrivesLoaded] = useState(false);
 
   useEffect(() => {
     const unsub = window.api.onScanProgress((p) => setProgress(p));
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    window.api
+      .listDrives()
+      .then(setDrives)
+      .finally(() => setDrivesLoaded(true));
   }, []);
 
   const currentNode = useMemo(() => {
@@ -37,14 +50,12 @@ export function App(): JSX.Element {
     return findNode(root, currentPath) || root;
   }, [root, currentPath]);
 
-  const handleSelectFolder = useCallback(async () => {
+  const startScan = useCallback(async (drivePath: string) => {
     setError(null);
-    const folder = await window.api.chooseFolder();
-    if (!folder) return;
     setScanning(true);
-    setProgress({ bytes: 0, files: 0, currentPath: folder });
+    setProgress({ bytes: 0, files: 0, currentPath: drivePath });
     try {
-      const result = await window.api.scan(folder);
+      const result = await window.api.scan(drivePath);
       setRoot(result);
       setCurrentPath(result.path);
     } catch (e) {
@@ -52,6 +63,12 @@ export function App(): JSX.Element {
     } finally {
       setScanning(false);
     }
+  }, []);
+
+  const reset = useCallback(() => {
+    setRoot(null);
+    setCurrentPath(null);
+    setError(null);
   }, []);
 
   if (scanning) {
@@ -63,7 +80,7 @@ export function App(): JSX.Element {
       <div className="welcome">
         <h1>Scan failed</h1>
         <p className="error">{error}</p>
-        <button onClick={handleSelectFolder}>Try again</button>
+        <button onClick={reset}>Try again</button>
       </div>
     );
   }
@@ -73,14 +90,27 @@ export function App(): JSX.Element {
       <div className="welcome">
         <div className="logo">▮▯▮</div>
         <h1>Disk Analyzer</h1>
-        <p>Pick a folder or drive to see what's eating your space.</p>
-        <button className="primary" onClick={handleSelectFolder}>
-          Choose folder…
-        </button>
-        <p className="hint">
-          Tip: scan an entire drive by selecting <code>C:\</code>, or pick a single
-          folder to narrow it down.
-        </p>
+        <p>Pick a drive to scan.</p>
+        {!drivesLoaded ? (
+          <p className="hint">Detecting drives…</p>
+        ) : drives.length === 0 ? (
+          <p className="hint">No drives detected.</p>
+        ) : (
+          <div className="drive-picker">
+            {drives.map((d) => (
+              <button
+                key={d.letter}
+                className="drive-btn"
+                onClick={() => startScan(d.letter + '\\')}
+              >
+                <span className="drive-btn-letter">{d.letter}</span>
+                <span className="drive-btn-label">
+                  {d.label || 'Local Disk'}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -93,7 +123,7 @@ export function App(): JSX.Element {
           rootPath={root.path}
           onNavigate={setCurrentPath}
         />
-        <button onClick={handleSelectFolder}>New scan</button>
+        <button onClick={reset}>New scan</button>
       </header>
       <main>
         <div className="treemap-pane">

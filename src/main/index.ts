@@ -1,6 +1,12 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+process.env.UV_THREADPOOL_SIZE = '64';
+
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import { join } from 'path';
 import { scan } from './scanner';
+import { listDrives } from './drives';
+import { tryMftScan } from './mftScanner';
+
+Menu.setApplicationMenu(null);
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -9,8 +15,9 @@ function createWindow(): BrowserWindow {
     minWidth: 800,
     minHeight: 500,
     title: 'Disk Analyzer',
-    backgroundColor: '#0f1419',
+    backgroundColor: '#1a202c',
     show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -33,21 +40,37 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(() => {
   const win = createWindow();
 
-  ipcMain.handle('choose-folder', async () => {
-    const result = await dialog.showOpenDialog(win, {
-      properties: ['openDirectory'],
-      title: 'Select a folder or drive to scan'
-    });
-    if (result.canceled || result.filePaths.length === 0) return null;
-    return result.filePaths[0];
+  ipcMain.handle('list-drives', async () => {
+    return await listDrives();
   });
 
   ipcMain.handle('scan', async (_event, folderPath: string) => {
-    return await scan(folderPath, (progress) => {
+    const sendProgress = (progress: {
+      bytes: number;
+      files: number;
+      currentPath: string;
+    }): void => {
       if (!win.isDestroyed()) {
         win.webContents.send('scan-progress', progress);
       }
-    });
+    };
+
+    // For whole-drive scans on Windows, try the fast Rust MFT path first.
+    // Pattern matches "C:\" or "C:" — anything else falls through to Node.
+    if (process.platform === 'win32' && /^[A-Za-z]:[\\\/]?$/.test(folderPath)) {
+      console.log('[scan] attempting MFT scan for', folderPath);
+      const start = Date.now();
+      const result = await tryMftScan(folderPath, sendProgress);
+      if (result) {
+        console.log(
+          `[scan] MFT scan succeeded in ${((Date.now() - start) / 1000).toFixed(1)}s`
+        );
+        return result;
+      }
+      console.log('[scan] MFT scan unavailable or failed — falling back to Node scanner');
+    }
+
+    return await scan(folderPath, sendProgress);
   });
 
   app.on('activate', () => {

@@ -14,6 +14,11 @@ export interface ScanProgress {
   currentPath: string;
 }
 
+export interface DriveInfo {
+  letter: string;
+  label: string;
+}
+
 export function formatBytes(b: number): string {
   if (b < 1024) return `${b} B`;
   if (b < 1024 ** 2) return `${(b / 1024).toFixed(1)} KB`;

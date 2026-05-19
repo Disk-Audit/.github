@@ -1,18 +1,17 @@
 :root {
-  --bg: #0f1419;
-  --bg-elev: #1a212b;
-  --bg-elev-2: #232c38;
+  --bg: #1a202c;
+  --bg-elev: #2d3748;
+  --bg-elev-2: #3a4a5f;
   --border: #2d3748;
   --text: #e2e8f0;
   --text-dim: #a0aec0;
   --text-faint: #718096;
   --accent: #f6ad55;
-  --accent-hover: #ed8936;
-  --link: #63b3ed;
-  --error: #fc8181;
+  --link: #4299e1;
+  --error: #f56565;
 
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Consolas', 'Courier New', monospace;
 }
 
 * {
@@ -29,37 +28,21 @@ body,
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
-  font-feature-settings: 'cv11', 'ss01';
 }
 
 button {
-  background: var(--bg-elev-2);
-  color: var(--text);
-  border: 1px solid var(--border);
-  padding: 7px 14px;
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  font-family: inherit;
 }
 
-button:hover:not(:disabled) {
-  background: var(--border);
-  border-color: var(--text-faint);
-}
-
-button.primary {
-  background: var(--accent);
-  color: var(--bg);
-  border-color: var(--accent);
-  font-weight: 600;
-}
-
-button.primary:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+button:hover {
+  background: #3182ce;
 }
 
 button:disabled {
@@ -67,15 +50,7 @@ button:disabled {
   cursor: default;
 }
 
-code {
-  font-family: var(--font-mono);
-  background: var(--bg-elev);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-
-/* ============ Welcome screen ============ */
+/* ============ Welcome ============ */
 
 .welcome {
   display: flex;
@@ -83,7 +58,7 @@ code {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  gap: 18px;
+  gap: 20px;
   text-align: center;
   padding: 40px;
 }
@@ -98,21 +73,18 @@ code {
 
 .welcome h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 .welcome p {
   margin: 0;
   color: var(--text-dim);
-  max-width: 420px;
 }
 
 .welcome .hint {
   font-size: 13px;
   color: var(--text-faint);
-  margin-top: 8px;
 }
 
 .welcome .error {
@@ -121,36 +93,73 @@ code {
   font-size: 13px;
 }
 
+.drive-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.drive-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  background: var(--bg-elev);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  min-width: 260px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.drive-btn:hover {
+  background: var(--bg-elev-2);
+  border-color: var(--accent);
+}
+
+.drive-btn-letter {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 36px;
+  text-align: left;
+}
+
+.drive-btn-label {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
 /* ============ Scan progress ============ */
 
 .scan-progress {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  padding: 40px;
+  gap: 16px;
 }
 
-.scan-progress-inner {
+.scan-progress > div {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  max-width: 600px;
-  width: 100%;
+  gap: 16px;
 }
 
 .scan-progress h2 {
   margin: 0;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 .stats {
   display: flex;
-  gap: 48px;
-  margin-top: 4px;
+  gap: 32px;
+  font-size: 18px;
 }
 
 .stat {
@@ -175,10 +184,20 @@ code {
   font-variant-numeric: tabular-nums;
 }
 
+.current-path {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  max-width: 80vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .indeterminate-bar {
-  width: 320px;
-  height: 3px;
-  background: var(--bg-elev-2);
+  width: 300px;
+  height: 4px;
+  background: var(--bg-elev);
   border-radius: 2px;
   overflow: hidden;
   position: relative;
@@ -187,28 +206,17 @@ code {
 .indeterminate-bar > div {
   position: absolute;
   height: 100%;
-  width: 35%;
-  background: var(--accent);
-  animation: indeterminate 1.4s ease-in-out infinite;
+  width: 30%;
+  background: #4299e1;
+  animation: indeterminate 1.5s ease-in-out infinite;
 }
 
 @keyframes indeterminate {
-  0% { left: -35%; }
+  0% { left: -30%; }
   100% { left: 100%; }
 }
 
-.current-path {
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  width: 100%;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ============ Main app shell ============ */
+/* ============ App ============ */
 
 .app {
   display: flex;
@@ -220,11 +228,10 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background: var(--bg-elev);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--bg);
   gap: 16px;
-  min-height: 52px;
 }
 
 .app main {
@@ -234,68 +241,15 @@ code {
   overflow: hidden;
 }
 
-.treemap-pane {
+.treemap-pane,
+.list-pane {
   overflow: hidden;
-  background: var(--bg);
 }
 
 .list-pane {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--bg-elev);
   overflow-y: auto;
-  background: var(--bg);
 }
-
-/* ============ Breadcrumbs ============ */
-
-.breadcrumbs {
-  flex: 1;
-  overflow-x: auto;
-  white-space: nowrap;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  scrollbar-width: thin;
-}
-
-.breadcrumbs::-webkit-scrollbar {
-  height: 4px;
-}
-
-.breadcrumbs .crumb-wrap {
-  display: inline-flex;
-  align-items: center;
-}
-
-.breadcrumbs .crumb {
-  background: none;
-  border: none;
-  color: var(--link);
-  padding: 4px 8px;
-  font-size: 13px;
-  font-family: var(--font-mono);
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-.breadcrumbs .crumb:hover:not(:disabled) {
-  background: var(--bg-elev-2);
-  text-decoration: none;
-}
-
-.breadcrumbs .crumb:disabled {
-  color: var(--text);
-  cursor: default;
-  font-weight: 600;
-}
-
-.breadcrumbs .sep {
-  color: var(--text-faint);
-  user-select: none;
-  font-size: 14px;
-}
-
-/* ============ Treemap ============ */
 
 .treemap-container {
   position: relative;
@@ -313,21 +267,20 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 100%;
   color: var(--text-faint);
-  font-style: italic;
 }
 
 .treemap-tooltip {
   position: fixed;
   background: var(--bg-elev);
-  border: 1px solid var(--border);
+  border: 1px solid var(--bg-elev-2);
   padding: 8px 12px;
   font-size: 12px;
-  border-radius: 5px;
+  border-radius: 4px;
   pointer-events: none;
   z-index: 1000;
-  max-width: 480px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  max-width: 400px;
 }
 
 .treemap-tooltip .name {
@@ -338,29 +291,62 @@ code {
 .treemap-tooltip .size {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
   margin-bottom: 4px;
 }
 
 .treemap-tooltip .path {
-  color: var(--text-faint);
+  color: var(--text-dim);
   font-family: var(--font-mono);
   font-size: 11px;
+  margin-top: 4px;
   word-break: break-all;
+}
+
+/* ============ Breadcrumbs ============ */
+
+.breadcrumbs {
+  flex: 1;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.breadcrumbs .crumb {
+  background: none;
+  border: none;
+  color: var(--link);
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.breadcrumbs .crumb:hover:not(:disabled) {
+  background: var(--bg-elev-2);
+  text-decoration: none;
+}
+
+.breadcrumbs .crumb:disabled {
+  color: var(--text);
+  cursor: default;
+  font-weight: 600;
+}
+
+.breadcrumbs .sep {
+  color: var(--text-faint);
 }
 
 /* ============ File list ============ */
 
 .file-list {
-  width: 100%;
-  font-size: 13px;
+  height: 100%;
+  overflow: auto;
 }
 
 .file-list.empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
   color: var(--text-faint);
   font-style: italic;
 }
@@ -368,22 +354,17 @@ code {
 .file-list table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13px;
 }
 
 .file-list th {
   text-align: left;
-  padding: 10px 12px;
+  padding: 8px 12px;
   background: var(--bg-elev);
   position: sticky;
   top: 0;
   cursor: pointer;
   font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  border-bottom: 1px solid var(--border);
-  user-select: none;
 }
 
 .file-list th.num {
@@ -392,19 +373,17 @@ code {
 
 .file-list th:hover {
   background: var(--bg-elev-2);
-  color: var(--text);
 }
 
 .file-list td {
-  padding: 7px 12px;
-  border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--bg-elev);
 }
 
 .file-list td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
-  font-size: 12px;
 }
 
 .file-list td.type {
@@ -423,22 +402,11 @@ code {
 }
 
 .file-list tr.file:hover {
-  background: rgba(26, 33, 43, 0.5);
+  background: rgba(45, 55, 72, 0.5);
 }
 
-.file-list tr.dir td.name .label {
+.file-list tr.dir td .label {
   color: var(--link);
-}
-
-.file-list .icon {
-  margin-right: 8px;
-  color: var(--text-faint);
-  display: inline-block;
-  width: 12px;
-}
-
-.file-list tr.dir .icon {
-  color: var(--accent);
 }
 
 .file-list .error {
@@ -448,14 +416,14 @@ code {
 .file-list .pct {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
 .file-list .bar {
-  width: 80px;
-  height: 5px;
-  background: var(--bg-elev-2);
+  width: 60px;
+  height: 6px;
+  background: var(--bg-elev);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -463,67 +431,9 @@ code {
 .file-list .bar .fill {
   height: 100%;
   background: var(--accent);
-  transition: width 0.2s;
 }
 
 .file-list .pct-text {
-  min-width: 48px;
+  min-width: 42px;
   text-align: right;
-  color: var(--text-dim);
-}
-
-/* ============ Scrollbars ============ */
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 5px;
-  border: 2px solid var(--bg);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-faint);
-}
-/* ===== Append these rules to the END of src/renderer/src/index.css ===== */
-
-.file-list .twirl {
-  display: inline-block;
-  width: 14px;
-  margin-right: 6px;
-  color: var(--accent);
-  transition: transform 0.15s ease;
-  text-align: center;
-}
-
-.file-list .twirl.leaf {
-  color: var(--text-faint);
-}
-
-.file-list .twirl.open {
-  transform: rotate(90deg);
-}
-
-.file-list .indent {
-  display: inline-flex;
-  align-items: center;
-}
-
-.file-list tr.truncated td {
-  background: rgba(26, 33, 43, 0.4);
-  color: var(--text-faint);
-  font-style: italic;
-  font-size: 12px;
-}
-
-/* Override the old icon rule */
-.file-list .icon {
-  display: none;
 }
