@@ -1,6 +1,5 @@
 # Disk Analyzer<img width="1920" height="1040" alt="image" src="image.png" />
 
-
 A cross-platform disk space analyzer (Windows + Linux). Scans a drive or folder and shows what's eating the space as a treemap, with a sortable file list alongside it.
 
 Built with Electron + React + TypeScript for the UI, and a small Rust binary for fast scanning on Windows.

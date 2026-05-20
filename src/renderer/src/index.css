@@ -7,12 +7,12 @@
   --color-background-tertiary: #111312;
 
   /* Category-ramp backgrounds — used by Treemap.tsx for the top-4 folders
-     by size. Light pastel hues so the treemap reads as bright at every depth,
-     even when a single folder dominates the drive. */
-  --color-background-info: #cee0ee;
-  --color-background-warning: #ede0c4;
-  --color-background-success: #d4e8c4;
-  --color-background-danger: #ecd0d8;
+     by size. Mid-tone hues so the labels stay readable; deeper levels then
+     tint toward white in Treemap.tsx for the pastel-nested look. */
+  --color-background-info: #6da4cc;
+  --color-background-warning: #c89a4e;
+  --color-background-success: #7eb05f;
+  --color-background-danger: #b86b8b;
 
   /* Text */
   --color-text-primary: #ecebe1;

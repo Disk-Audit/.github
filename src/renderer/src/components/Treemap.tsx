@@ -92,9 +92,15 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
     const prunedRoot = prune(node, 0);
 
     const h = hierarchy<FsNode>(prunedRoot, (d) => d.children)
-      .sum((d) =>
-        d.children && d.children.length > 0 ? 0 : Math.max(d.size, 0)
-      )
+      .sum((d) => {
+        if (d.children && d.children.length > 0) return 0;
+        // Logarithmic scaling so one massive folder doesn't squash everything
+        // else into pixel-thin strips. log1p(bytes) keeps relative ordering
+        // but compresses the dynamic range — a 100 GB folder is ~3.5x larger
+        // than a 1 GB folder on screen instead of 100x.
+        const raw = Math.max(d.size, 0);
+        return Math.log1p(raw);
+      })
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
     treemap<FsNode>()

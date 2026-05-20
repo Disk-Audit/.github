@@ -1,6 +1,6 @@
 {
   "name": "disk-analyzer",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "A cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
   "main": "./out/main/index.js",
   "author": "",
