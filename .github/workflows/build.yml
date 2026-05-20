@@ -1,0 +1,94 @@
+name: Build installers
+
+# Runs automatically when you publish a release on GitHub. Also available as a
+# manual trigger ("Run workflow" button) for testing without making a release.
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to attach built installers to the release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+          - os: ubuntu-latest
+            label: Linux
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.label }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm install
+
+      # ----- Rust scanner is Windows-only -----
+
+      - name: Set up Rust
+        if: runner.os == 'Windows'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        if: runner.os == 'Windows'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: mft_scanner
+
+      - name: Build Rust scanner
+        if: runner.os == 'Windows'
+        working-directory: mft_scanner
+        run: cargo build --release
+
+      # ----- Build the installer -----
+
+      - name: Package Windows installer
+        if: runner.os == 'Windows'
+        run: npm run package
+
+      - name: Package Linux installer
+        if: runner.os == 'Linux'
+        run: npm run package:linux
+
+      - name: List artifacts
+        shell: bash
+        run: ls -la dist/
+
+      # ----- Attach to the GitHub release -----
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # For manual ("workflow_dispatch") runs, store the installers as
+      # downloadable artifacts on the Actions run page instead.
+      - name: Upload artifacts (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.label }}
+          path: |
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb
+          if-no-files-found: ignore

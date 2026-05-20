@@ -16,6 +16,8 @@ export interface ScanProgress {
 
 export interface DriveInfo {
   letter: string;
+  /** Full scannable path. "C:\\" on Windows, "/" or "/home" on Linux. */
+  path: string;
   label: string;
   totalBytes: number;
   freeBytes: number;

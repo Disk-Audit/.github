@@ -1,7 +1,7 @@
 {
   "name": "disk-analyzer",
-  "version": "0.5.0",
-  "description": "A Windows disk space analyzer with treemap visualization",
+  "version": "0.6.0",
+  "description": "A cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
   "main": "./out/main/index.js",
   "author": "",
   "scripts": {
@@ -9,6 +9,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "package": "electron-vite build && electron-builder --win --x64",
+    "package:linux": "electron-vite build && electron-builder --linux --x64",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -36,14 +37,19 @@
       "out/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "mft_scanner/target/release/mft_scanner.exe",
-        "to": "mft_scanner.exe"
-      }
-    ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "extraResources": [
+        {
+          "from": "mft_scanner/target/release/mft_scanner.exe",
+          "to": "mft_scanner.exe"
+        }
+      ]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility",
+      "synopsis": "Disk space analyzer with treemap visualization"
     }
   }
 }

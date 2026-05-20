@@ -10,9 +10,12 @@ export interface WalkerProgress {
   currentPath: string;
 }
 
+const isWindows = process.platform === 'win32';
+
 function getBinaryPath(): string {
+  const binName = isWindows ? 'mft_scanner.exe' : 'mft_scanner';
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'mft_scanner.exe');
+    return path.join(process.resourcesPath, binName);
   }
   return path.join(
     __dirname,
@@ -21,18 +24,28 @@ function getBinaryPath(): string {
     'mft_scanner',
     'target',
     'release',
-    'mft_scanner.exe'
+    binName
   );
 }
 
 /**
  * Scan using the Rust FindFirstFileW walker. Returns the tree on success,
  * or null if the binary is missing or fails (caller falls back to Node).
+ *
+ * The current Rust walker is Windows-only — on Linux/macOS this returns null
+ * immediately and the Node walker handles everything. Ported Rust walker for
+ * Unix is a future enhancement; the Node walker is fine for typical home
+ * directory sizes.
  */
 export async function tryRustWalk(
   rootPath: string,
   onProgress: (p: WalkerProgress) => void
 ): Promise<FsNode | null> {
+  if (!isWindows) {
+    // The Rust binary only exists for Windows right now. Fall through to Node.
+    return null;
+  }
+
   const binaryPath = getBinaryPath();
   try {
     await fs.access(binaryPath);

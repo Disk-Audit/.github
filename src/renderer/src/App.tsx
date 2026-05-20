@@ -80,8 +80,18 @@ function driveTypeLabel(d: DriveInfo): string {
 
 function getDriveForPath(p: string, drives: DriveInfo[]): DriveInfo | null {
   if (!p) return null;
-  const letter = p.charAt(0).toUpperCase();
-  return drives.find((d) => d.letter.charAt(0).toUpperCase() === letter) || null;
+  // On Windows, match by drive letter ("C:\Users\..." -> drive with letter "C:").
+  if (/^[A-Za-z]:/.test(p)) {
+    const letter = p.charAt(0).toUpperCase();
+    return (
+      drives.find((d) => d.letter.charAt(0).toUpperCase() === letter) || null
+    );
+  }
+  // On Linux/macOS, match by the longest mount-point prefix.
+  const candidates = drives
+    .filter((d) => d.path && (p === d.path || p.startsWith(d.path + '/')))
+    .sort((a, b) => b.path.length - a.path.length);
+  return candidates[0] || null;
 }
 
 // ----- Navigation history -----
@@ -265,9 +275,9 @@ export function App(): JSX.Element {
 
                 return (
                   <button
-                    key={d.letter}
+                    key={d.path || d.letter}
                     className="drive-btn"
-                    onClick={() => runScan(d.letter + '\\')}
+                    onClick={() => runScan(d.path)}
                   >
                     <div className="drive-btn-letter-col">
                       <div className="drive-btn-letter">{d.letter}</div>
