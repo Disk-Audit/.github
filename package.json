@@ -1,6 +1,6 @@
 {
   "name": "disk-analyzer",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "A cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
   "main": "./out/main/index.js",
   "author": "",
@@ -50,7 +50,7 @@
       "target": ["AppImage", "deb"],
       "category": "Utility",
       "synopsis": "Disk space analyzer with treemap visualization",
-      "maintainer": "Ledgeon <noreply@github.com>"
+      "maintainer": "NF7UOS <nf7uos@gmail.com>"
     }
   }
 }

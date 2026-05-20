@@ -44,12 +44,13 @@ interface LaidRect {
   hasChildren: boolean;
 }
 
-/** Mix the depth-1 pastel toward the page background as we go deeper. */
+/** Mix the depth-1 color toward white as we go deeper, so deeper rects go
+ * lighter/pastel and the dark text on them stays readable in dark mode. */
 function tintForDepth(baseBg: string, depth: number): string {
   if (depth <= 1) return baseBg;
   // depth 2: 30% diluted, depth 3: 55%, depth 4: 70%
   const dilute = Math.min(15 + (depth - 1) * 20, 75);
-  return `color-mix(in srgb, ${baseBg} ${100 - dilute}%, var(--color-background-primary))`;
+  return `color-mix(in srgb, ${baseBg} ${100 - dilute}%, #ffffff)`;
 }
 
 export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
