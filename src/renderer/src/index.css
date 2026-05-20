@@ -1,57 +1,45 @@
-/* ----- Design tokens ----- */
+/* ----- Design tokens (forced dark, diskscan-style) ----- */
 
 :root {
-  --color-background-primary: #f4f0e3;
-  --color-background-secondary: #e6e1cf;
-  --color-background-tertiary: #d2ccb5;
-  --color-background-info: #b9dfc8;
-  --color-background-warning: #f3cf94;
-  --color-background-success: #c7d3ac;
-  --color-background-danger: #ebbbb4;
+  /* Background ramp */
+  --color-background-primary: #15171c;
+  --color-background-secondary: #1c1e24;
+  --color-background-tertiary: #111312;
 
-  --color-text-primary: #1a1d18;
-  --color-text-secondary: #545850;
-  --color-text-tertiary: #7d7f76;
-  --color-text-info: #0d4a31;
-  --color-text-warning: #6d3f0c;
-  --color-text-success: #3f4f1d;
-  --color-text-danger: #6e2828;
+  /* Category-ramp backgrounds — used by Treemap.tsx for the top-4 folders
+     by size. Mid-tone vivid hues so dark text on them stays readable. */
+  --color-background-info: #6da4cc;
+  --color-background-warning: #c89a4e;
+  --color-background-success: #7eb05f;
+  --color-background-danger: #b86b8b;
 
-  --color-border-tertiary: rgba(0, 0, 0, 0.1);
-  --color-border-secondary: rgba(0, 0, 0, 0.2);
+  /* Text */
+  --color-text-primary: #ecebe1;
+  --color-text-secondary: #aaada3;
+  --color-text-tertiary: #686a64;
 
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
+  /* Dark text on the category backgrounds — high contrast */
+  --color-text-info: #0a1f31;
+  --color-text-warning: #2c1f0a;
+  --color-text-success: #112a08;
+  --color-text-danger: #2c0f1c;
 
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  --color-border-tertiary: rgba(255, 255, 255, 0.08);
+  --color-border-secondary: rgba(255, 255, 255, 0.22);
+
+  --border-radius-sm: 2px;
+  --border-radius-md: 3px;
+  --border-radius-lg: 4px;
+
   --font-mono:
-    'JetBrains Mono', 'Cascadia Mono', 'Fira Code', 'Consolas', monospace;
-}
+    'JetBrains Mono', 'Cascadia Mono', 'Fira Code', 'Consolas',
+    ui-monospace, monospace;
+  /* Force monospace everywhere — mint's components use --font-sans for body
+     copy; pointing it at the mono stack gives the diskscan terminal feel. */
+  --font-sans: var(--font-mono);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background-primary: #1a1c19;
-    --color-background-secondary: #232622;
-    --color-background-tertiary: #111312;
-    --color-background-info: #134734;
-    --color-background-warning: #4d310a;
-    --color-background-success: #354619;
-    --color-background-danger: #571c1c;
-
-    --color-text-primary: #ecebe1;
-    --color-text-secondary: #aaada3;
-    --color-text-tertiary: #686a64;
-    --color-text-info: #97dab4;
-    --color-text-warning: #efbe75;
-    --color-text-success: #becc8c;
-    --color-text-danger: #ecb1ad;
-
-    --color-border-tertiary: rgba(255, 255, 255, 0.1);
-    --color-border-secondary: rgba(255, 255, 255, 0.22);
-  }
+  /* Accent green used for sizes and OK statuses */
+  --accent-green: #8fd14f;
 }
 
 /* ----- Reset & base ----- */
@@ -66,34 +54,28 @@ body,
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: var(--font-sans);
-  background: var(--color-background-tertiary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--color-background-primary);
   color: var(--color-text-primary);
-  font-size: 14px;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
 button {
   background: transparent;
-  border: 0.5px solid var(--color-border-secondary);
-  border-radius: var(--border-radius-md);
-  padding: 5px 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-sm);
+  padding: 4px 10px;
   font-size: 12px;
-  font-family: inherit;
+  font-family: var(--font-mono);
   color: var(--color-text-primary);
   cursor: pointer;
-  transition:
-    background 0.1s,
-    transform 0.05s;
+  transition: background 0.1s;
 }
 
 button:hover:not(:disabled) {
   background: var(--color-background-secondary);
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.98);
 }
 
 button:disabled {
@@ -101,75 +83,100 @@ button:disabled {
   cursor: default;
 }
 
-/* ----- App shell (the "windowed" look from the preview) ----- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-background-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-tertiary);
+  border: 2px solid var(--color-background-primary);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-secondary);
+}
+
+/* ----- App shell ----- */
 
 .app {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--color-background-primary);
-  font-family: var(--font-sans);
 }
+
+/* ----- Custom title bar (Windows-style icons, draggable) ----- */
 
 .titlebar {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  border-bottom: 0.5px solid var(--color-border-tertiary);
+  padding: 0 0 0 12px;
+  border-bottom: 1px solid var(--color-border-tertiary);
   background: var(--color-background-secondary);
   font-size: 12px;
   color: var(--color-text-secondary);
-  -webkit-app-region: drag; /* let users drag the window by the title bar */
+  -webkit-app-region: drag;
   user-select: none;
+  flex-shrink: 0;
+  height: 30px;
 }
 
 .titlebar .titlebar-icon {
   margin-right: 8px;
   font-size: 14px;
+  color: var(--accent-green);
 }
 
 .titlebar .titlebar-controls {
   margin-left: auto;
   display: flex;
-  gap: 4px;
+  gap: 0;
+  height: 100%;
   -webkit-app-region: no-drag;
 }
 
 .titlebar .titlebar-controls button {
-  width: 28px;
-  height: 22px;
+  width: 44px;
+  height: 100%;
   padding: 0;
   border: none;
-  border-radius: var(--border-radius-sm);
+  border-radius: 0;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .titlebar .titlebar-controls button:hover {
-  background: var(--color-background-tertiary);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
 }
 
 .titlebar .titlebar-controls button.close:hover {
-  background: var(--color-background-danger);
-  color: var(--color-text-danger);
+  background: #c92a2a;
+  color: #fff;
 }
+
+/* ----- Toolbar (back/up/refresh + breadcrumbs + choose folder) ----- */
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-bottom: 0.5px solid var(--color-border-tertiary);
+  gap: 10px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-primary);
   flex-shrink: 0;
 }
 
 .toolbar .nav-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,6 +194,11 @@ button:disabled {
   color: var(--color-text-primary);
 }
 
+.toolbar .nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .toolbar .toolbar-spacer {
   flex: 1;
 }
@@ -196,36 +208,10 @@ button:disabled {
   padding: 4px 10px;
 }
 
-/* ----- Body (treemap | list) ----- */
-
-.body {
-  flex: 1;
-  display: flex;
-  align-items: stretch;
-  min-height: 0;
-}
-
-.treemap-pane {
-  flex: 1.3;
-  position: relative;
-  min-width: 0;
-  background: var(--color-background-tertiary);
-  border-right: 0.5px solid var(--color-border-tertiary);
-  padding: 4px;
-}
-
-.list-pane {
-  flex: 1;
-  min-width: 280px;
-  max-width: 420px;
-  overflow-y: auto;
-  font-size: 12px;
-}
-
 /* ----- Breadcrumbs ----- */
 
 .breadcrumbs {
-  font-size: 13px;
+  font-size: 12.5px;
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
@@ -238,16 +224,15 @@ button:disabled {
   border: none;
   padding: 2px 4px;
   margin: 0;
-  font-family: inherit;
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
   color: var(--color-text-tertiary);
   cursor: pointer;
   border-radius: var(--border-radius-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
-  transition: color 0.1s;
+  max-width: 220px;
 }
 
 .breadcrumbs .crumb:hover:not(:disabled) {
@@ -264,15 +249,40 @@ button:disabled {
 .breadcrumbs .sep {
   color: var(--color-text-tertiary);
   margin: 0 2px;
-  font-size: 13px;
 }
 
-/* ----- Treemap ----- */
+/* ----- Body: treemap | file list ----- */
+
+.body {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.treemap-pane {
+  flex: 1.3;
+  position: relative;
+  min-width: 0;
+  background: var(--color-background-primary);
+  border-right: 1px solid var(--color-border-tertiary);
+}
+
+.list-pane {
+  flex: 1;
+  min-width: 280px;
+  max-width: 480px;
+  overflow: hidden;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ----- Treemap (recursive, drill-in on click) ----- */
 
 .treemap-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
 }
 
 .treemap-empty {
@@ -280,71 +290,72 @@ button:disabled {
   align-items: center;
   justify-content: center;
   color: var(--color-text-tertiary);
-  font-size: 13px;
   font-style: italic;
 }
 
 .treemap-rect {
   position: absolute;
-  outline: 1px solid rgba(0, 0, 0, 0.18);
+  outline: 1px solid var(--color-background-primary);
   outline-offset: -1px;
-  border-radius: 3px;
-  padding: 6px 8px;
+  border-radius: 0;
+  padding: 4px 6px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
-  cursor: default;
-  transition: filter 0.12s;
-}
-
-/* Directory rects with nested children show their label in the top strip
-   (which d3's paddingTop reserved). Leaves keep the bottom-anchored label. */
-.treemap-rect.has-children {
-  justify-content: flex-start;
-  padding: 3px 7px;
+  user-select: none;
 }
 
 .treemap-rect.clickable {
   cursor: pointer;
+  transition: filter 0.08s;
 }
 
 .treemap-rect.clickable:hover {
-  filter: brightness(0.94);
+  filter: brightness(1.1);
+}
+
+/* For directory rects, the label sits at the top in the carved-out strip */
+.treemap-rect.has-children {
+  justify-content: flex-start;
+  padding: 3px 6px;
 }
 
 .treemap-rect .label {
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: var(--font-mono);
 }
 
 .treemap-rect .sublabel {
-  font-size: 10px;
-  opacity: 0.75;
+  font-size: 10.5px;
+  opacity: 0.78;
   line-height: 1.2;
-  margin-top: 2px;
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
-/* tooltip */
 .treemap-tooltip {
   position: fixed;
   pointer-events: none;
-  background: var(--color-background-primary);
+  background: var(--color-background-secondary);
   color: var(--color-text-primary);
-  border: 0.5px solid var(--color-border-secondary);
-  border-radius: var(--border-radius-md);
-  padding: 8px 10px;
-  font-size: 12px;
-  max-width: 320px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 10px;
+  font-size: 11.5px;
+  max-width: 360px;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-mono);
 }
 
 .treemap-tooltip .tooltip-name {
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -358,9 +369,8 @@ button:disabled {
 
 .treemap-tooltip .tooltip-path {
   color: var(--color-text-tertiary);
-  font-size: 11px;
+  font-size: 10.5px;
   margin-top: 4px;
-  font-family: var(--font-mono);
   word-break: break-all;
 }
 
@@ -374,23 +384,27 @@ button:disabled {
 
 .file-list .list-header {
   display: flex;
-  padding: 8px 12px;
-  border-bottom: 0.5px solid var(--color-border-tertiary);
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  flex-shrink: 0;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  color: var(--color-text-tertiary);
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
   user-select: none;
+  flex-shrink: 0;
+  text-transform: uppercase;
 }
 
 .file-list .col-name {
   flex: 1;
   min-width: 0;
 }
+
 .file-list .col-size {
   width: 64px;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
 .file-list .col-pct {
   width: 40px;
   text-align: right;
@@ -405,6 +419,8 @@ button:disabled {
   font: inherit;
   color: inherit;
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .file-list .header-sortable:hover {
@@ -418,9 +434,9 @@ button:disabled {
 
 .file-list .row {
   display: flex;
-  padding: 8px 12px;
+  padding: 5px 12px;
   align-items: center;
-  border-bottom: 0.5px solid var(--color-border-tertiary);
+  border-bottom: 1px solid var(--color-border-tertiary);
   font-size: 12px;
   cursor: default;
 }
@@ -434,41 +450,27 @@ button:disabled {
 }
 
 .file-list .row.selected {
-  background: var(--color-background-info);
-  color: var(--color-text-info);
-  font-weight: 500;
+  background: rgba(143, 209, 79, 0.12);
+  color: var(--color-text-primary);
 }
 
-.file-list .row.selected .icon,
 .file-list .row.selected .col-size,
 .file-list .row.selected .col-pct {
-  color: var(--color-text-info);
+  color: var(--accent-green);
+  font-weight: 600;
 }
 
-.file-list .row.warning-tier {
-  --row-bg: var(--color-background-warning);
-  --row-fg: var(--color-text-warning);
-}
-.file-list .row.success-tier {
-  --row-bg: var(--color-background-success);
-  --row-fg: var(--color-text-success);
-}
-.file-list .row.danger-tier {
-  --row-bg: var(--color-background-danger);
-  --row-fg: var(--color-text-danger);
+.file-list .row.selected .icon {
+  color: var(--accent-green);
 }
 
-/* Synthetic "(N small files)" aggregate rows — read as different from real files */
-.file-list .row.bucket .name-text {
-  font-style: italic;
+.file-list .row.bucket {
   color: var(--color-text-tertiary);
-}
-.file-list .row.bucket .icon {
-  opacity: 0.7;
+  font-style: italic;
 }
 
 .file-list .row .icon {
-  margin-right: 6px;
+  margin-right: 8px;
   font-size: 14px;
   flex-shrink: 0;
   color: var(--color-text-tertiary);
@@ -487,33 +489,28 @@ button:disabled {
   color: var(--color-text-secondary);
 }
 
-.file-list .row.selected .name-text {
-  font-weight: 500;
-}
-
 .file-list .row .error-icon {
   margin-left: 4px;
-  color: var(--color-text-warning);
+  color: #efbe75;
   font-size: 13px;
 }
 
 .file-list .empty {
   padding: 24px 12px;
   color: var(--color-text-tertiary);
-  font-size: 12px;
   text-align: center;
   font-style: italic;
 }
 
-/* context menu */
+/* Context menu */
 .context-menu {
   position: fixed;
-  background: var(--color-background-primary);
-  border: 0.5px solid var(--color-border-secondary);
-  border-radius: var(--border-radius-md);
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-sm);
   padding: 4px;
   z-index: 2000;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
   min-width: 180px;
 }
 
@@ -523,15 +520,16 @@ button:disabled {
   text-align: left;
   background: transparent;
   border: none;
-  border-radius: var(--border-radius-sm);
+  border-radius: 2px;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--color-text-primary);
   cursor: pointer;
+  font-family: var(--font-mono);
 }
 
 .context-menu button:hover {
-  background: var(--color-background-secondary);
+  background: var(--color-background-primary);
 }
 
 /* ----- Status bar ----- */
@@ -539,13 +537,14 @@ button:disabled {
 .status-bar {
   display: flex;
   gap: 16px;
-  padding: 6px 12px;
-  border-top: 0.5px solid var(--color-border-tertiary);
+  padding: 5px 12px;
+  border-top: 1px solid var(--color-border-tertiary);
   background: var(--color-background-secondary);
   font-size: 11px;
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
   flex-shrink: 0;
   user-select: none;
+  align-items: center;
 }
 
 .status-bar .status-spacer {
@@ -553,91 +552,93 @@ button:disabled {
 }
 
 .status-bar .check-icon {
-  color: var(--color-text-success);
+  color: var(--accent-green);
   margin-right: 4px;
 }
 
-/* ----- Welcome (drive picker) ----- */
+/* ----- Welcome screen (drive picker) ----- */
 
 .welcome {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  min-height: 0;
-  padding: 32px;
+  padding: 40px;
   text-align: center;
+  min-height: 0;
   background: var(--color-background-primary);
 }
 
 .welcome .logo {
   font-family: var(--font-mono);
-  font-size: 36px;
-  color: var(--color-text-info);
-  letter-spacing: 4px;
-  margin-bottom: 16px;
+  font-size: 32px;
+  color: var(--accent-green);
+  letter-spacing: 6px;
+  margin-bottom: 14px;
 }
 
 .welcome h1 {
-  margin: 0 0 8px;
-  font-size: 22px;
+  margin: 0 0 6px;
+  font-size: 20px;
   font-weight: 500;
   color: var(--color-text-primary);
+  font-family: var(--font-mono);
 }
 
 .welcome p {
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: 13px;
   margin: 0 0 24px;
   max-width: 480px;
 }
 
 .welcome .hint {
   color: var(--color-text-tertiary);
-  font-size: 13px;
   font-style: italic;
 }
 
 .welcome .error {
-  color: var(--color-text-danger);
-  background: var(--color-background-danger);
+  color: #ecb1ad;
+  background: rgba(87, 28, 28, 0.4);
+  border: 1px solid rgba(87, 28, 28, 0.8);
   padding: 10px 14px;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-sm);
   margin-bottom: 16px;
   max-width: 520px;
   text-align: left;
   white-space: pre-wrap;
-  font-size: 13px;
+  font-size: 12px;
+  font-family: var(--font-mono);
 }
 
 .welcome .drive-picker {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   max-width: 720px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .welcome .drive-btn {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   padding: 12px 14px;
   text-align: left;
-  background: var(--color-background-primary);
-  border: 0.5px solid var(--color-border-tertiary);
-  border-radius: var(--border-radius-lg);
-  font-size: 13px;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: border-color 0.1s, background 0.1s;
+  font-family: var(--font-mono);
 }
 
 .welcome .drive-btn:hover {
-  background: var(--color-background-secondary);
   border-color: var(--color-border-secondary);
+  filter: brightness(1.12);
 }
 
 .drive-btn-letter-col {
@@ -654,15 +655,15 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-background-info);
-  color: var(--color-text-info);
-  border-radius: var(--border-radius-md);
-  font-size: 16px;
-  font-weight: 500;
+  background: var(--color-background-primary);
+  color: var(--accent-green);
+  border-radius: var(--border-radius-sm);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .drive-btn-fs {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--color-text-tertiary);
   margin-top: 4px;
 }
@@ -686,21 +687,22 @@ button:disabled {
 }
 
 .drive-btn-name {
-  font-weight: 500;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--color-text-primary);
 }
 
 .drive-btn-type {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--color-text-tertiary);
 }
 
 .drive-btn-free {
   font-size: 11px;
-  color: var(--color-text-secondary);
+  color: var(--accent-green);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -710,8 +712,8 @@ button:disabled {
 }
 
 .drive-btn-bar {
-  height: 4px;
-  background: var(--color-background-tertiary);
+  height: 3px;
+  background: var(--color-background-primary);
   border-radius: 2px;
   margin-top: 8px;
   overflow: hidden;
@@ -719,28 +721,27 @@ button:disabled {
 
 .drive-btn-bar-fill {
   height: 100%;
-  background: var(--color-background-info);
-  transition: width 0.3s;
+  background: #5a8a36;
 }
 
 .drive-btn-bar-fill.full {
-  background: var(--color-background-warning);
+  background: #d4a14a;
 }
 
-.folder-btn {
-  font-size: 13px;
-  padding: 8px 16px;
+.welcome .folder-btn {
+  font-size: 12px;
+  padding: 6px 14px;
 }
 
 /* ----- Scan progress ----- */
 
 .scan-progress {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  padding: 40px;
   min-height: 0;
-  padding: 32px;
   background: var(--color-background-primary);
 }
 
@@ -754,71 +755,68 @@ button:disabled {
   font-size: 18px;
   font-weight: 500;
   color: var(--color-text-primary);
-  margin: 0 0 24px;
+  margin: 0 0 20px;
+  font-family: var(--font-mono);
 }
 
 .scan-progress .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .scan-progress .stat {
   background: var(--color-background-secondary);
   padding: 12px;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--color-border-tertiary);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
 .scan-progress .stat .label {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--color-text-secondary);
+  letter-spacing: 0.5px;
 }
 
 .scan-progress .stat .value {
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-green);
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
 
 .scan-progress .indeterminate-bar {
   position: relative;
-  height: 4px;
-  background: var(--color-background-tertiary);
+  height: 3px;
+  background: var(--color-background-secondary);
   border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .scan-progress .indeterminate-bar > div {
   position: absolute;
   height: 100%;
   width: 30%;
-  background: var(--color-background-info);
+  background: var(--accent-green);
   border-radius: 2px;
   animation: indeterminate 1.4s ease-in-out infinite;
 }
 
 @keyframes indeterminate {
-  0% {
-    left: -30%;
-  }
-  50% {
-    left: 50%;
-  }
-  100% {
-    left: 100%;
-  }
+  0% { left: -30%; }
+  50% { left: 50%; }
+  100% { left: 100%; }
 }
 
 .scan-progress .current-path {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--color-text-tertiary);
   white-space: nowrap;
   overflow: hidden;

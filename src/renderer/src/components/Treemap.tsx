@@ -47,9 +47,8 @@ interface LaidRect {
 /** Mix the depth-1 pastel toward the page background as we go deeper. */
 function tintForDepth(baseBg: string, depth: number): string {
   if (depth <= 1) return baseBg;
-  // depth 2: ~20% diluted, depth 3: ~40%, depth 4: ~55% — keeps enough
-  // color at every level for the boundaries to read clearly.
-  const dilute = Math.min((depth - 1) * 18, 55);
+  // depth 2: 30% diluted, depth 3: 55%, depth 4: 70%
+  const dilute = Math.min(15 + (depth - 1) * 20, 75);
   return `color-mix(in srgb, ${baseBg} ${100 - dilute}%, var(--color-background-primary))`;
 }
 
