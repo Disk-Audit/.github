@@ -7,7 +7,7 @@ A Windows app that scans a folder or drive and shows you what's eating your spac
 ---
 
 ## Installing
-Download the latest installer from the [Releases page](https://github.com/yourname/disk-analyzer/releases/latest).
+Download the latest installer from the [Releases page](https://github.com/Disk-Audit/.github/releases).
 
 ---
 
