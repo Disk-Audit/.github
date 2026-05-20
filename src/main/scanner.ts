@@ -19,6 +19,30 @@ export interface ScanProgress {
 
 const isWindows = process.platform === 'win32';
 
+// On Linux, these mount points contain virtual files that report fake sizes.
+// /proc/kcore in particular is reported as the size of the virtual memory
+// address space — typically ~128 TB on x86_64. Walking them ruins totals
+// and wastes time on uninteresting kernel state.
+const LINUX_PSEUDO_PATHS = new Set([
+  '/proc',
+  '/sys',
+  '/dev',
+  '/run',
+  '/snap',
+  '/var/lib/docker',
+  '/var/lib/snapd',
+  '/var/lib/lxd'
+]);
+
+function isPseudoPath(p: string): boolean {
+  if (isWindows) return false;
+  if (LINUX_PSEUDO_PATHS.has(p)) return true;
+  for (const pseudo of LINUX_PSEUDO_PATHS) {
+    if (p.startsWith(pseudo + '/')) return true;
+  }
+  return false;
+}
+
 // Prefix absolute Windows paths with \\?\ to bypass the 260-character MAX_PATH limit.
 // Without this, deep paths (think node_modules) silently fail to read.
 function toLongPath(p: string): string {
@@ -57,6 +81,18 @@ export async function scan(
   }
 
   async function walk(dirPath: string): Promise<FsNode> {
+    // Linux: never descend into /proc, /sys, /dev, /run, /snap, etc.
+    // These contain virtual files that report fake sizes (notably /proc/kcore
+    // appears as ~128 TB on x86_64 systems).
+    if (isPseudoPath(dirPath)) {
+      return {
+        name: basename(dirPath),
+        path: dirPath,
+        size: 0,
+        type: 'dir'
+      };
+    }
+
     let entries;
     try {
       entries = await fs.readdir(toLongPath(dirPath), { withFileTypes: true });
