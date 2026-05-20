@@ -135,11 +135,35 @@ const PSEUDO_FS = new Set([
   'fuse.portal',
   'fuse.snapfuse',
   'overlay',
+  'overlayfs',
   'squashfs',
-  'ramfs'
+  'ramfs',
+  'aufs',
+  'unionfs',
+  // Network / WSL mounts — including these would inflate totals dramatically
+  // (e.g. WSL2 surfaces every Windows drive as 9p at /mnt/c, /mnt/d, …)
+  '9p',
+  'cifs',
+  'smbfs',
+  'smb3',
+  'nfs',
+  'nfs4',
+  'sshfs',
+  'fuse.sshfs'
 ]);
 
-const PSEUDO_PREFIXES = ['/proc', '/sys', '/dev', '/run', '/snap', '/var/lib/docker'];
+const PSEUDO_PREFIXES = [
+  '/proc',
+  '/sys',
+  '/dev',
+  '/run',
+  '/snap',
+  '/var/lib/docker',
+  '/var/lib/snapd',
+  '/var/lib/lxd',
+  '/var/lib/containers',
+  '/mnt/wsl' // WSL bookkeeping mounts
+];
 
 interface MountEntry {
   device: string;
@@ -222,17 +246,29 @@ function shortLabelFromMount(mountPoint: string): string {
 async function unixList(): Promise<DriveInfo[]> {
   const mounts = await readMounts();
   const result: DriveInfo[] = [];
-  const seen = new Set<string>(); // dedupe by mount point
+  const seenMountPoints = new Set<string>();
+  const seenDevices = new Set<string>();
 
   for (const m of mounts) {
-    if (seen.has(m.mountPoint)) continue;
+    if (seenMountPoints.has(m.mountPoint)) continue;
     if (PSEUDO_FS.has(m.fsType)) continue;
     if (PSEUDO_PREFIXES.some((p) => m.mountPoint.startsWith(p + '/')))
       continue;
     if (PSEUDO_PREFIXES.includes(m.mountPoint) && m.mountPoint !== '/')
       continue;
     if (m.fsType.startsWith('fuse.')) continue;
-    seen.add(m.mountPoint);
+    seenMountPoints.add(m.mountPoint);
+
+    const realDevice = await resolveBlockDevice(m.device);
+
+    // Dedupe by underlying block device. btrfs subvolumes and bind mounts both
+    // point at the same physical device — without this we'd add the device's
+    // capacity to the total once per subvolume, exploding the reported size.
+    // Keep only the first (shortest path) mount of each device.
+    if (realDevice && realDevice.startsWith('/dev/')) {
+      if (seenDevices.has(realDevice)) continue;
+      seenDevices.add(realDevice);
+    }
 
     // Capacity via statfs (Node 18.15+; falls back to 0 if unsupported).
     let totalBytes = 0;
@@ -245,7 +281,16 @@ async function unixList(): Promise<DriveInfo[]> {
       // statfs unavailable — leave zeros, UI will say "size unavailable"
     }
 
-    const realDevice = await resolveBlockDevice(m.device);
+    // Sanity guard: anything claiming over 200 TB on a single mount is almost
+    // certainly a misreporting filesystem (ZFS pool, network share, weird
+    // virtual mount). Skip it rather than show a nonsensical number.
+    if (totalBytes > 200 * 1024 * 1024 * 1024 * 1024) {
+      console.warn(
+        `[drives] Skipping ${m.mountPoint} — reported size ${totalBytes} bytes looks wrong`
+      );
+      continue;
+    }
+
     const mediaType = realDevice
       ? await detectMediaType(realDevice)
       : 'unknown';
