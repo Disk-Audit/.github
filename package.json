@@ -49,7 +49,8 @@
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "Utility",
-      "synopsis": "Disk space analyzer with treemap visualization"
+      "synopsis": "Disk space analyzer with treemap visualization",
+      "maintainer": "Ledgeon <noreply@github.com>"
     }
   }
 }
