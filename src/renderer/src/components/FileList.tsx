@@ -68,6 +68,9 @@ export function FileList({ node, onDrillIn }: FileListProps): JSX.Element {
 
   function handleContextMenu(e: MouseEvent, path: string): void {
     e.preventDefault();
+    // Synthetic "small files" aggregate rows don't correspond to a real path,
+    // so there's nothing for Explorer to open.
+    if (path.endsWith('\\__small_files_bucket__')) return;
     setMenu({ x: e.clientX, y: e.clientY, path });
   }
 
@@ -112,18 +115,19 @@ export function FileList({ node, onDrillIn }: FileListProps): JSX.Element {
       <div className="rows">
         {children.map((c, idx) => {
           const isDir = c.type === 'dir';
+          const isBucket = c.path.endsWith('\\__small_files_bucket__');
           const pct = (c.size / total) * 100;
           const isTop = idx === 0;
-          const iconName = isDir ? 'folder' : 'file';
+          const iconName = isDir ? 'folder' : isBucket ? 'files' : 'file';
           return (
             <div
               key={c.path}
-              className={`row${isDir ? ' clickable' : ''}${isTop ? ' selected' : ''}`}
+              className={`row${isDir ? ' clickable' : ''}${isTop ? ' selected' : ''}${isBucket ? ' bucket' : ''}`}
               onClick={() => {
                 if (isDir) onDrillIn(c.path);
               }}
               onContextMenu={(e) => handleContextMenu(e, c.path)}
-              title={c.path}
+              title={isBucket ? `${c.name} — aggregated for performance` : c.path}
             >
               <i className={`ti ti-${iconName} icon`} aria-hidden="true"></i>
               <span className="name-text">{c.name}</span>

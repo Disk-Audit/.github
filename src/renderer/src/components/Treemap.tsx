@@ -1,10 +1,11 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { hierarchy, treemap } from 'd3-hierarchy';
+import { hierarchy, treemap, type HierarchyRectangularNode } from 'd3-hierarchy';
 import type { FsNode } from '../types';
 import { formatBytes } from '../types';
 
-// Top 4 children get the semantic palette ramps; everything else falls back
-// to neutral so the eye lands on what actually matters.
+// Top 4 depth-1 children get the semantic palette; the rest fall back to
+// neutral. Deeper levels share their depth-1 ancestor's color group but get
+// progressively lighter via color-mix.
 const PALETTE = [
   { bg: 'var(--color-background-info)', fg: 'var(--color-text-info)' },
   { bg: 'var(--color-background-warning)', fg: 'var(--color-text-warning)' },
@@ -15,6 +16,10 @@ const NEUTRAL = {
   bg: 'var(--color-background-secondary)',
   fg: 'var(--color-text-secondary)'
 };
+
+// Max recursion depth for layout/rendering. 4 is enough that the eye reads
+// "deeply nested" without producing thousands of sub-pixel boxes.
+const MAX_DEPTH = 4;
 
 interface TreemapProps {
   node: FsNode;
@@ -33,7 +38,18 @@ interface LaidRect {
   y: number;
   w: number;
   h: number;
+  depth: number;
   rank: number;
+  isLeaf: boolean;
+  hasChildren: boolean;
+}
+
+/** Mix the depth-1 pastel toward the page background as we go deeper. */
+function tintForDepth(baseBg: string, depth: number): string {
+  if (depth <= 1) return baseBg;
+  // depth 2: 30% diluted, depth 3: 55%, depth 4: 70%
+  const dilute = Math.min(15 + (depth - 1) * 20, 75);
+  return `color-mix(in srgb, ${baseBg} ${100 - dilute}%, var(--color-background-primary))`;
 }
 
 export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
@@ -41,7 +57,6 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [hover, setHover] = useState<Hover | null>(null);
 
-  // Re-lay on container resize so the treemap stays squarified.
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
@@ -57,19 +72,25 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
   const rects = useMemo<LaidRect[] | null>(() => {
     if (!node.children || node.children.length === 0) return null;
 
-    // Sort children desc by size so we can assign palette tiers by rank.
-    const sortedChildren = [...node.children].sort((a, b) => b.size - a.size);
+    // Rank top-level children by size so we can assign the palette tiers
+    const sortedTopLevel = [...node.children].sort((a, b) => b.size - a.size);
     const rankMap = new Map<string, number>();
-    sortedChildren.forEach((c, i) => rankMap.set(c.path, i));
+    sortedTopLevel.forEach((c, i) => rankMap.set(c.path, i));
 
-    // Build a depth-1 hierarchy: the immediate children become leaves so the
-    // treemap shows only this level (drill in to see deeper levels).
-    const flatRoot: FsNode = {
-      ...node,
-      children: node.children.map((c) => ({ ...c, children: undefined }))
-    };
+    // Trim the tree at MAX_DEPTH — deeper levels would produce sub-pixel
+    // boxes that we'd filter out anyway, and pruning keeps the layout fast.
+    function prune(n: FsNode, depth: number): FsNode {
+      if (!n.children || depth >= MAX_DEPTH) {
+        return { ...n, children: undefined };
+      }
+      return {
+        ...n,
+        children: n.children.map((c) => prune(c, depth + 1))
+      };
+    }
+    const prunedRoot = prune(node, 0);
 
-    const h = hierarchy<FsNode>(flatRoot, (d) => d.children)
+    const h = hierarchy<FsNode>(prunedRoot, (d) => d.children)
       .sum((d) =>
         d.children && d.children.length > 0 ? 0 : Math.max(d.size, 0)
       )
@@ -77,24 +98,44 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
 
     treemap<FsNode>()
       .size([size.width, size.height])
-      .paddingOuter(0)
-      .paddingInner(2)
+      .paddingOuter(1)
+      .paddingInner(1)
+      // Carve a strip at the top of dir rects for labels. The depth-1 strip
+      // is taller so the top-level folder names sit clearly above their
+      // nested children.
+      .paddingTop((n: HierarchyRectangularNode<FsNode>) => {
+        if (n.depth === 0) return 0;
+        if (n.depth === 1) return 18;
+        if (n.depth === 2) return 14;
+        return 0;
+      })
       .round(true)(h);
 
+    // Find the depth-1 ancestor's path so we can color by group
+    function topAncestorPath(n: HierarchyRectangularNode<FsNode>): string {
+      let cur: HierarchyRectangularNode<FsNode> | null = n;
+      while (cur && cur.depth > 1) cur = cur.parent;
+      return cur ? cur.data.path : '';
+    }
+
     return h
-      .leaves()
-      .filter((l) => {
-        const w = (l.x1 ?? 0) - (l.x0 ?? 0);
-        const hh = (l.y1 ?? 0) - (l.y0 ?? 0);
-        return w >= 2 && hh >= 2;
+      .descendants()
+      .filter((n) => n.depth > 0)
+      .filter((n) => {
+        const w = (n.x1 ?? 0) - (n.x0 ?? 0);
+        const hh = (n.y1 ?? 0) - (n.y0 ?? 0);
+        return w >= 3 && hh >= 3;
       })
-      .map((l) => ({
-        node: l.data,
-        x: l.x0 ?? 0,
-        y: l.y0 ?? 0,
-        w: (l.x1 ?? 0) - (l.x0 ?? 0),
-        h: (l.y1 ?? 0) - (l.y0 ?? 0),
-        rank: rankMap.get(l.data.path) ?? 999
+      .map((n) => ({
+        node: n.data,
+        x: n.x0 ?? 0,
+        y: n.y0 ?? 0,
+        w: (n.x1 ?? 0) - (n.x0 ?? 0),
+        h: (n.y1 ?? 0) - (n.y0 ?? 0),
+        depth: n.depth,
+        rank: rankMap.get(topAncestorPath(n)) ?? 999,
+        isLeaf: !n.children || n.children.length === 0,
+        hasChildren: !!(n.children && n.children.length > 0)
       }));
   }, [node, size]);
 
@@ -109,25 +150,34 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
   return (
     <div ref={containerRef} className="treemap-container">
       {rects.map((r) => {
-        const color = r.rank < PALETTE.length ? PALETTE[r.rank] : NEUTRAL;
+        const swatch = r.rank < PALETTE.length ? PALETTE[r.rank] : NEUTRAL;
         const isDir = r.node.type === 'dir';
-        const showLabel = r.w > 36 && r.h > 22;
-        const showSub = r.h > 40;
-        const useBigLabel = r.w > 110 && r.h > 44;
+        const isBucket = r.node.path.endsWith('\\__small_files_bucket__');
+        // Labels: top-level dirs always (room is reserved); deeper rects
+        // only when they're large enough.
+        const showLabel =
+          (r.depth === 1 && r.w > 36 && r.h > 22) ||
+          (r.depth === 2 && r.w > 50 && r.h > 28) ||
+          (r.depth >= 3 && r.w > 80 && r.h > 30);
+        const showSub = showLabel && r.h > 36 && !r.hasChildren;
+
         return (
           <div
             key={r.node.path}
-            className={`treemap-rect${isDir ? ' clickable' : ''}`}
+            className={`treemap-rect${isDir && !isBucket ? ' clickable' : ''}${r.hasChildren ? ' has-children' : ''}`}
             style={{
               left: r.x,
               top: r.y,
               width: r.w,
               height: r.h,
-              background: color.bg,
-              color: color.fg
+              background: tintForDepth(swatch.bg, r.depth),
+              color: swatch.fg
             }}
-            onClick={() => {
-              if (isDir) onDrillIn(r.node.path);
+            onClick={(e) => {
+              if (isDir && !isBucket) {
+                e.stopPropagation();
+                onDrillIn(r.node.path);
+              }
             }}
             onMouseEnter={(e) =>
               setHover({ node: r.node, x: e.clientX, y: e.clientY })
@@ -139,10 +189,7 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
           >
             {showLabel && (
               <>
-                <span
-                  className="label"
-                  style={{ fontSize: useBigLabel ? 13 : 11 }}
-                >
+                <span className="label" style={{ fontSize: r.depth === 1 ? 13 : 11 }}>
                   {r.node.name}
                 </span>
                 {showSub && (

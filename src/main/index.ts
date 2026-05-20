@@ -17,7 +17,7 @@ function createWindow(): BrowserWindow {
     minWidth: 800,
     minHeight: 500,
     title: 'Disk Analyzer',
-    backgroundColor: '#fdfcf7',
+    backgroundColor: '#f4f0e3',
     show: false,
     autoHideMenuBar: true,
     frame: false,

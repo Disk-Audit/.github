@@ -1,55 +1,142 @@
 # Disk Analyzer
 
-A Windows app that scans a folder or drive and shows you what's eating your space. You get a visual treemap on the left and a sortable file list on the right, so you can see at a glance where your storage went.
+A Windows desktop app that scans a folder or drive and shows what's eating your space. Drive picker on the welcome screen, then a custom-chrome app window with a drill-down treemap on the left and a sortable file list on the right.
 
-![Disk Analyzer scanning the D: drive, showing a SteamLibrary folder taking up 92.2% of the space](screenshot.png)
-
----
-
-## Installing
-Download the latest installer from the [Releases page](https://github.com/Disk-Audit/.github/releases).
+Built with **Electron + React + TypeScript + Vite + D3** for the UI and a small **Rust** binary for fast scanning + drive info.
 
 ---
 
-## Using it
+## What's new in 0.3
 
-1. Open **Disk Analyzer** from the Start menu.
-2. Click **Choose folder…**
-3. Pick what you want to scan:
-   - Try something small first like your **Downloads** folder to get a feel for it.
-   - Or pick **`C:\`** to scan your whole drive. Expect a few minutes the first time.
-4. Once the scan finishes:
-   - **Hover** over rectangles in the treemap to see what each one is.
-   - **Double-click** a folder in the right-hand list to drill into it.
-   - Use the **breadcrumbs** at the top to jump back up a level.
+- New "classic split" layout matching the design preview: custom title bar with min/max/close, toolbar with back/up/refresh + breadcrumb, treemap + list body, status bar.
+- The treemap now shows the **immediate children** of the current folder, not all leaves. Click a folder rectangle to drill in; the layout re-squarifies for that level.
+- Top-by-size children get the info/warning/success/danger palette tiers so the biggest items pop visually; the rest fall back to neutral.
+- Light + dark mode auto via `prefers-color-scheme`.
+- Window controls (minimize, maximize, close) are wired up via new IPC handlers since the window is now frameless.
 
-### A few things you might notice while scanning
+---
 
-- **A ⚠ on some folders.** Windows protects certain system folders (like `System Volume Information`). The scanner skips them and keeps going. This is normal — you haven't done anything wrong.
-- **"Size on disk" doesn't match Windows Explorer.** Disk Analyzer shows actual file sizes. Explorer's "Size on disk" rounds up to filesystem blocks and accounts for NTFS compression. Both numbers are correct, just measuring different things.
-- **The first scan of a drive is the slow one.** Windows caches folder info after a scan, so running it again on the same folder is much quicker.
+## What you need installed first
+
+- **Node.js 18 or later** — [download here](https://nodejs.org/). The "LTS" version is fine.
+- **Rust toolchain** — [rustup.rs](https://rustup.rs/). Needed to build the fast scanner. If you skip this, the app still works, just slower (Node fallback).
+- **Windows.** The path code and most APIs are Windows-first.
+
+---
+
+## Running it
+
+Open a terminal in the project folder, then:
+
+```powershell
+npm install
+
+cd mft_scanner
+cargo build --release
+cd ..
+
+npm run dev
+```
+
+The Rust build only needs to happen once (or after edits to `mft_scanner/`). The Electron window opens automatically once `npm run dev` is ready.
+
+**Hot reload works**: edit any file in `src/renderer/` and the UI updates instantly. Edit `src/main/` or `src/preload/` and the app restarts.
+
+### Try it out
+
+1. Pick a drive from the cards on the welcome screen — or click **"Or scan a specific folder…"** to pick a folder
+2. **Click a rectangle** in the treemap or a row in the list to drill into that folder. The treemap re-lays for the new level.
+3. Walk back up via the **breadcrumb** segments, the **back arrow** (history-aware), or the **up arrow** (parent folder).
+4. **Right-click any item** in the list for "Open in Explorer".
+
+---
+
+## Building a real `.exe` to keep
+
+```powershell
+npm run package
+```
+
+This produces an NSIS installer in `dist/`. The Rust binary is bundled inside automatically via `extraResources`, so end users don't need Rust installed.
+
+Before `npm run package`, make sure `mft_scanner/target/release/mft_scanner.exe` exists (i.e. you've run `cargo build --release` at least once).
+
+---
+
+## How the code is organized
+
+```
+disk-analyzer/
+├── electron.vite.config.ts
+├── package.json
+├── tsconfig.json
+├── mft_scanner/               # Rust scanner binary
+│   ├── Cargo.toml
+│   └── src/
+│       ├── main.rs            #   --list-drives / --walk subcommands
+│       ├── drives.rs          #   GetLogicalDriveStrings + SSD/HDD detection
+│       └── walker.rs          #   parallel FindFirstFileW walker
+└── src/
+    ├── main/                  # Node.js side (full filesystem access)
+    │   ├── index.ts           #   Electron entry, IPC handlers
+    │   ├── scanner.ts         #   Pure-Node fallback walker
+    │   ├── drives.ts          #   Calls Rust binary, falls back to PowerShell
+    │   └── rustWalker.ts      #   Calls Rust walker, falls back to Node
+    ├── preload/
+    │   └── index.ts           # Safe bridge exposing window.api
+    └── renderer/
+        ├── index.html
+        └── src/
+            ├── main.tsx
+            ├── App.tsx        # Welcome screen + scan result view
+            ├── types.ts
+            ├── window.d.ts
+            ├── index.css
+            └── components/
+                ├── Treemap.tsx      # Drill-down squarified treemap
+                ├── FileList.tsx     # Sortable list, right-click menu
+                ├── Breadcrumbs.tsx
+                └── ScanProgress.tsx
+```
+
+---
+
+## How scanning works
+
+When you start a scan, the app tries these in order, falling through on failure:
+
+1. **Rust walker** (`mft_scanner.exe --walk <path>`) — uses `FindFirstFileW` directly, parallelized via rayon. No admin needed. Fast: ~5-10 seconds for 2M files on an SSD.
+2. **Node walker** (`src/main/scanner.ts`) — pure Node.js using `fs.readdir` + `fs.stat`. Slower but works without any external binary.
+
+The Node walker is preserved as a fallback in case the Rust binary is missing (e.g. someone ran the dev server without building Rust first).
+
+---
+
+## Where to look first when you want to change something
+
+| You want to… | Look at |
+|---|---|
+| Change the treemap color tiers | `src/renderer/src/components/Treemap.tsx` → `PALETTE` |
+| Add a column to the file list | `src/renderer/src/components/FileList.tsx` |
+| Change the design tokens / theme | `src/renderer/src/index.css` → CSS vars at the top (light + dark) |
+| Add a new right-click menu item | `FileList.tsx` → `.context-menu`, plus a new IPC handler in `src/main/index.ts` and preload |
+| Change the window size or title | `src/main/index.ts` → `BrowserWindow({...})` |
+| Tweak the title bar buttons | `src/renderer/src/App.tsx` → `TitleBar` component |
 
 ---
 
 ## Troubleshooting
 
-**"Windows protected your PC" when running the installer.**
-Click **More info**, then **Run anyway**. This is a standard SmartScreen warning for apps that aren't code-signed.
+**`cargo build` fails with "linker not found"** — you need the C++ Build Tools that ship with Visual Studio (the "Desktop development with C++" workload). Install from [visualstudio.microsoft.com/downloads](https://visualstudio.microsoft.com/downloads/).
 
-**Permission denied on system folders.**
-Some folders (like parts of `C:\Windows`) require admin access. Close the app, right-click the **Disk Analyzer** shortcut, and choose **Run as administrator** to scan those.
+**Scan is slow** — DevTools console (Ctrl+Shift+I) will show `[scan] Rust walker succeeded` or `[scan] falling back to Node scanner`. If it's falling back, the Rust binary isn't being found — check `mft_scanner/target/release/mft_scanner.exe` exists.
 
-**The app opens to a blank window.**
-Close it and reopen it from the Start menu. If it keeps happening, uninstall from **Settings → Apps**, then run the installer again.
+**Drive picker shows nothing** — check the DevTools console. If the Rust binary is missing it falls back to PowerShell, which is slower but should still work.
 
-**Scan seems stuck.**
-Big drives with lots of small files can take several minutes. Check the progress bar at the bottom — as long as the file count is still climbing, it's working. If nothing has moved for 30+ seconds, close the app and try a smaller folder first to confirm everything's working.
-
-**OneDrive or `Windows.old` folders throw weird errors.**
-These folders are managed by Windows in unusual ways and occasionally cause hiccups. The scan will skip them and continue.
+**Permission denied on system folders** — expected. Right-click the installed app and "Run as administrator" if you need access to protected directories.
 
 ---
 
 ## License
 
-Released under the [PolyForm Noncommercial License 1.0.0](LICENSE). In plain English: use it, share it, modify it, build on it — just don't sell it or bundle it into something you charge for. See the `LICENSE` file for the full terms.
+PolyForm Noncommercial License 1.0.0 — see `LICENSE`.

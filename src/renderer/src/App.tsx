@@ -22,6 +22,33 @@ function findNode(root: FsNode, targetPath: string): FsNode | null {
   return null;
 }
 
+/**
+ * Skip past "pass-through" directories — ones whose only entry is another
+ * directory. Clicking "Users" with a single subfolder lands you in that
+ * subfolder directly, so the treemap and list show something useful instead
+ * of a single rectangle that fills the whole view.
+ *
+ * Rule: exactly one subdirectory at this level AND no real files (the
+ * synthetic small-files aggregation bucket doesn't count — it's not real
+ * content the user can interact with).
+ */
+function collapseSingleSubdirChain(node: FsNode): FsNode {
+  let current = node;
+  while (current.type === 'dir' && current.children) {
+    const subdirs = current.children.filter((c) => c.type === 'dir');
+    const realFiles = current.children.filter(
+      (c) =>
+        c.type === 'file' && !c.path.endsWith('\\__small_files_bucket__')
+    );
+    if (subdirs.length === 1 && realFiles.length === 0) {
+      current = subdirs[0];
+    } else {
+      break;
+    }
+  }
+  return current;
+}
+
 function findParent(
   root: FsNode,
   targetPath: string,
@@ -131,8 +158,8 @@ export function App(): JSX.Element {
 
   const currentNode = useMemo<FsNode | null>(() => {
     if (!root) return null;
-    if (!currentPath) return root;
-    return findNode(root, currentPath) || root;
+    const base = !currentPath ? root : findNode(root, currentPath) || root;
+    return collapseSingleSubdirChain(base);
   }, [root, currentPath]);
 
   const totalFiles = useMemo(() => (root ? countFiles(root) : 0), [root]);

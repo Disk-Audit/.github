@@ -1,24 +1,24 @@
 /* ----- Design tokens ----- */
 
 :root {
-  --color-background-primary: #fdfcf7;
-  --color-background-secondary: #f1efe5;
-  --color-background-tertiary: #e7e4d6;
-  --color-background-info: #dbf0e4;
-  --color-background-warning: #fbe5c8;
-  --color-background-success: #e3ead0;
-  --color-background-danger: #f5d9d4;
+  --color-background-primary: #f4f0e3;
+  --color-background-secondary: #e6e1cf;
+  --color-background-tertiary: #d2ccb5;
+  --color-background-info: #b9dfc8;
+  --color-background-warning: #f3cf94;
+  --color-background-success: #c7d3ac;
+  --color-background-danger: #ebbbb4;
 
-  --color-text-primary: #1d201b;
-  --color-text-secondary: #5d605a;
-  --color-text-tertiary: #8a8c84;
-  --color-text-info: #14563a;
-  --color-text-warning: #7d4912;
-  --color-text-success: #4a5824;
-  --color-text-danger: #7c2e2e;
+  --color-text-primary: #1a1d18;
+  --color-text-secondary: #545850;
+  --color-text-tertiary: #7d7f76;
+  --color-text-info: #0d4a31;
+  --color-text-warning: #6d3f0c;
+  --color-text-success: #3f4f1d;
+  --color-text-danger: #6e2828;
 
-  --color-border-tertiary: rgba(0, 0, 0, 0.08);
-  --color-border-secondary: rgba(0, 0, 0, 0.16);
+  --color-border-tertiary: rgba(0, 0, 0, 0.1);
+  --color-border-secondary: rgba(0, 0, 0, 0.2);
 
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
@@ -33,24 +33,24 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background-primary: #1f221f;
-    --color-background-secondary: #272b27;
-    --color-background-tertiary: #171a17;
-    --color-background-info: #0e3c2a;
-    --color-background-warning: #412a06;
-    --color-background-success: #2b3a13;
-    --color-background-danger: #4a1818;
+    --color-background-primary: #1a1c19;
+    --color-background-secondary: #232622;
+    --color-background-tertiary: #111312;
+    --color-background-info: #134734;
+    --color-background-warning: #4d310a;
+    --color-background-success: #354619;
+    --color-background-danger: #571c1c;
 
-    --color-text-primary: #efeee5;
-    --color-text-secondary: #b0b3a8;
-    --color-text-tertiary: #6e706a;
-    --color-text-info: #a3e2bf;
-    --color-text-warning: #f3c885;
-    --color-text-success: #c5d394;
-    --color-text-danger: #f0b8b5;
+    --color-text-primary: #ecebe1;
+    --color-text-secondary: #aaada3;
+    --color-text-tertiary: #686a64;
+    --color-text-info: #97dab4;
+    --color-text-warning: #efbe75;
+    --color-text-success: #becc8c;
+    --color-text-danger: #ecb1ad;
 
-    --color-border-tertiary: rgba(255, 255, 255, 0.08);
-    --color-border-secondary: rgba(255, 255, 255, 0.2);
+    --color-border-tertiary: rgba(255, 255, 255, 0.1);
+    --color-border-secondary: rgba(255, 255, 255, 0.22);
   }
 }
 
@@ -298,6 +298,13 @@ button:disabled {
   transition: filter 0.12s;
 }
 
+/* Directory rects with nested children show their label in the top strip
+   (which d3's paddingTop reserved). Leaves keep the bottom-anchored label. */
+.treemap-rect.has-children {
+  justify-content: flex-start;
+  padding: 3px 7px;
+}
+
 .treemap-rect.clickable {
   cursor: pointer;
 }
@@ -449,6 +456,15 @@ button:disabled {
 .file-list .row.danger-tier {
   --row-bg: var(--color-background-danger);
   --row-fg: var(--color-text-danger);
+}
+
+/* Synthetic "(N small files)" aggregate rows — read as different from real files */
+.file-list .row.bucket .name-text {
+  font-style: italic;
+  color: var(--color-text-tertiary);
+}
+.file-list .row.bucket .icon {
+  opacity: 0.7;
 }
 
 .file-list .row .icon {
