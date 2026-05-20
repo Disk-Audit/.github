@@ -286,8 +286,8 @@ button:disabled {
 
 .treemap-rect {
   position: absolute;
-  outline: 1.5px solid var(--color-background-primary);
-  outline-offset: -1.5px;
+  outline: 1px solid rgba(0, 0, 0, 0.18);
+  outline-offset: -1px;
   border-radius: 3px;
   padding: 6px 8px;
   display: flex;
