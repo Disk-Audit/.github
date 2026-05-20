@@ -1,0 +1,49 @@
+{
+  "name": "disk-analyzer",
+  "version": "0.3.0",
+  "description": "A Windows disk space analyzer with treemap visualization",
+  "main": "./out/main/index.js",
+  "author": "",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "electron-vite build && electron-builder --win --x64",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tabler/icons-webfont": "^3.0.0",
+    "d3-hierarchy": "^3.1.2"
+  },
+  "devDependencies": {
+    "@types/d3-hierarchy": "^3.1.7",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^4.2.1",
+    "electron": "^28.2.3",
+    "electron-builder": "^24.13.0",
+    "electron-vite": "^2.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.3"
+  },
+  "build": {
+    "appId": "com.example.disk-analyzer",
+    "productName": "Disk Analyzer",
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "mft_scanner/target/release/mft_scanner.exe",
+        "to": "mft_scanner.exe"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
