@@ -1,4 +1,5 @@
-# Disk Analyzer
+# Disk Analyzer<img width="1920" height="1040" alt="image" src="image.png" />
+
 
 A Windows disk space analyzer. Scans a drive or folder and shows what's eating the space as a treemap, with a sortable file list alongside it.
 
