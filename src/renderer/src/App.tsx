@@ -9,6 +9,10 @@ import { Treemap } from './components/Treemap';
 import { FileList } from './components/FileList';
 import { Breadcrumbs } from './components/Breadcrumbs';
 import { ScanProgress } from './components/ScanProgress';
+import { DuplicateFinder } from './components/DuplicateFinder';
+import { FileTypePanel } from './components/FileTypePanel';
+import { Logo } from './components/Logo';
+import { DriveSwitcher } from './components/DriveSwitcher';
 
 // ----- Tree helpers -----
 
@@ -111,12 +115,31 @@ interface History {
 
 // ----- Window chrome -----
 
-function TitleBar(): JSX.Element {
+function TitleBar({
+  theme,
+  onToggleTheme
+}: {
+  theme: Theme;
+  onToggleTheme: () => void;
+}): JSX.Element {
   return (
     <div className="titlebar">
-      <i className="ti ti-chart-pie-3 titlebar-icon" aria-hidden="true"></i>
-      <span>Disk Analyzer</span>
+      <Logo size={16} className="titlebar-logo" />
+      <span className="titlebar-brand">
+        Ledgeon <span className="titlebar-brand-dim">— Disk Analyzer</span>
+      </span>
       <div className="titlebar-controls">
+        <button
+          className="theme-toggle"
+          onClick={onToggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+        >
+          <i
+            className={`ti ti-${theme === 'dark' ? 'sun' : 'moon'}`}
+            aria-hidden="true"
+          ></i>
+        </button>
         <button
           onClick={() => window.api.windowMinimize()}
           aria-label="Minimize"
@@ -146,6 +169,18 @@ function TitleBar(): JSX.Element {
 
 // ----- App -----
 
+type Theme = 'dark' | 'light';
+
+function getInitialTheme(): Theme {
+  try {
+    const stored = localStorage.getItem('ledgeon-theme');
+    if (stored === 'light' || stored === 'dark') return stored;
+  } catch {
+    // localStorage might be unavailable in some sandboxed contexts
+  }
+  return 'dark';
+}
+
 export function App(): JSX.Element {
   const [root, setRoot] = useState<FsNode | null>(null);
   const [history, setHistory] = useState<History>({ stack: [], index: -1 });
@@ -158,6 +193,23 @@ export function App(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [drives, setDrives] = useState<DriveInfo[]>([]);
   const [drivesLoaded, setDrivesLoaded] = useState(false);
+  const [showDupes, setShowDupes] = useState(false);
+  const [listView, setListView] = useState<'files' | 'types'>('files');
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  // Apply the theme to <html> and persist it
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('ledgeon-theme', theme);
+    } catch {
+      /* ignore */
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  }, []);
 
   useEffect(() => {
     const unsub = window.api.onScanProgress((p) => setProgress(p));
@@ -229,6 +281,16 @@ export function App(): JSX.Element {
     runScan(folder);
   }, [runScan]);
 
+  // If launched from the OS context menu ("Scan with…"), the path is passed
+  // through argv → main → IPC. Auto-scan it on startup.
+  useEffect(() => {
+    window.api.getLaunchPath().then((p) => {
+      if (p) runScan(p);
+    });
+    const unsub = window.api.onScanPath((p) => runScan(p));
+    return unsub;
+  }, [runScan]);
+
   const reset = useCallback(() => {
     setRoot(null);
     setHistory({ stack: [], index: -1 });
@@ -239,7 +301,7 @@ export function App(): JSX.Element {
   if (scanning) {
     return (
       <div className="app">
-        <TitleBar />
+        <TitleBar theme={theme} onToggleTheme={toggleTheme} />
         <ScanProgress {...progress} />
       </div>
     );
@@ -249,7 +311,7 @@ export function App(): JSX.Element {
   if (error) {
     return (
       <div className="app">
-        <TitleBar />
+        <TitleBar theme={theme} onToggleTheme={toggleTheme} />
         <div className="welcome">
           <h1>Scan failed</h1>
           <div className="error">{error}</div>
@@ -263,11 +325,17 @@ export function App(): JSX.Element {
   if (!root || !currentNode) {
     return (
       <div className="app">
-        <TitleBar />
+        <TitleBar theme={theme} onToggleTheme={toggleTheme} />
         <div className="welcome">
-          <div className="logo">▮▯▮</div>
-          <h1>Disk Analyzer</h1>
-          <p>Pick a drive or folder to see what's eating your space.</p>
+          <Logo size={64} className="welcome-logo" />
+          <h1>
+            Ledgeon{' '}
+            <span className="welcome-h1-dim">— Disk Analyzer</span>
+          </h1>
+          <p className="welcome-tagline">
+            Map every byte across your drives. See what's eating your storage,
+            spot duplicates, and reclaim space — all from one place.
+          </p>
 
           {!drivesLoaded ? (
             <p className="hint">Detecting drives…</p>
@@ -297,12 +365,12 @@ export function App(): JSX.Element {
                       <div className="drive-btn-row1">
                         <div className="drive-btn-names">
                           <span className="drive-btn-name">{displayName}</span>
-                          {d.label && (
-                            <span className="drive-btn-type">{typeLabel}</span>
-                          )}
+                          <span className="drive-btn-type">{typeLabel}</span>
                         </div>
                         {d.totalBytes > 0 ? (
-                          <span className="drive-btn-free">
+                          <span
+                            className={`drive-btn-free${isFull ? ' full' : ''}`}
+                          >
                             {formatBytes(d.freeBytes)} free
                           </span>
                         ) : (
@@ -312,12 +380,29 @@ export function App(): JSX.Element {
                         )}
                       </div>
                       {d.totalBytes > 0 && (
-                        <div className="drive-btn-bar">
-                          <div
-                            className={`drive-btn-bar-fill${isFull ? ' full' : ''}`}
-                            style={{ width: `${Math.min(100, pct)}%` }}
-                          />
-                        </div>
+                        <>
+                          <div className="drive-btn-stats">
+                            <span className="drive-btn-used-label">Used</span>
+                            <span className="drive-btn-used-value">
+                              {formatBytes(used)}
+                            </span>
+                            <span className="drive-btn-stats-sep">/</span>
+                            <span className="drive-btn-total">
+                              {formatBytes(d.totalBytes)}
+                            </span>
+                            <span
+                              className={`drive-btn-pct${isFull ? ' full' : ''}`}
+                            >
+                              {pct.toFixed(0)}%
+                            </span>
+                          </div>
+                          <div className="drive-btn-bar">
+                            <div
+                              className={`drive-btn-bar-fill${isFull ? ' full' : ''}`}
+                              style={{ width: `${Math.min(100, pct)}%` }}
+                            />
+                          </div>
+                        </>
                       )}
                     </div>
                   </button>
@@ -346,7 +431,7 @@ export function App(): JSX.Element {
 
   return (
     <div className="app">
-      <TitleBar />
+      <TitleBar theme={theme} onToggleTheme={toggleTheme} />
       <div className="toolbar">
         <button
           className="nav-btn"
@@ -380,16 +465,49 @@ export function App(): JSX.Element {
           onNavigate={navigateTo}
         />
         <div className="toolbar-spacer"></div>
-        <button className="choose-btn" onClick={handleSelectFolder}>
-          Choose folder…
+        <button
+          className="dupe-btn"
+          onClick={() => setShowDupes(true)}
+          title="Find duplicate files in the current folder"
+        >
+          <i className="ti ti-copy" aria-hidden="true"></i>
+          <span>Find duplicates</span>
         </button>
+        <DriveSwitcher
+          drives={drives}
+          currentPath={root.path}
+          onPick={(p) => runScan(p)}
+          onChooseFolder={handleSelectFolder}
+        />
       </div>
       <div className="body">
         <div className="treemap-pane">
           <Treemap node={currentNode} onDrillIn={navigateTo} />
         </div>
         <div className="list-pane">
-          <FileList node={currentNode} onDrillIn={navigateTo} />
+          <div className="list-pane-tabs">
+            <button
+              className={`list-pane-tab${listView === 'files' ? ' active' : ''}`}
+              onClick={() => setListView('files')}
+            >
+              <i className="ti ti-file" aria-hidden="true"></i> Files
+            </button>
+            <button
+              className={`list-pane-tab${listView === 'types' ? ' active' : ''}`}
+              onClick={() => setListView('types')}
+            >
+              <i className="ti ti-chart-pie" aria-hidden="true"></i> Types
+            </button>
+          </div>
+          {listView === 'files' ? (
+            <FileList
+              node={currentNode}
+              onDrillIn={navigateTo}
+              onFileTrashed={() => runScan(root.path)}
+            />
+          ) : (
+            <FileTypePanel node={currentNode} />
+          )}
         </div>
       </div>
       <div className="status-bar">
@@ -401,8 +519,43 @@ export function App(): JSX.Element {
           {currentNode.name}: {formatBytes(currentNode.size)}
         </span>
         <div className="status-spacer"></div>
+        {drive && (
+          <>
+            <span className="status-drive">
+              <i className="ti ti-device-desktop" aria-hidden="true"></i>
+              {drive.label || drive.path}
+              <span className="dim">
+                {' · '}
+                {drive.driveType === 'removable'
+                  ? 'Removable'
+                  : drive.mediaType === 'ssd'
+                    ? 'SSD'
+                    : drive.mediaType === 'hdd'
+                      ? 'HDD'
+                      : 'Local'}
+                {drive.fileSystem ? ` · ${drive.fileSystem}` : ''}
+              </span>
+            </span>
+            {drive.totalBytes > 0 && (
+              <span className="status-free">
+                <span className="dim">free </span>
+                {formatBytes(drive.freeBytes)}
+              </span>
+            )}
+          </>
+        )}
         <span>{capacityLabel}</span>
       </div>
+      {showDupes && (
+        <DuplicateFinder
+          folderPath={currentNode.path}
+          onClose={() => setShowDupes(false)}
+          onAfterDelete={() => {
+            // Only re-scan when files were actually removed
+            if (root) runScan(root.path);
+          }}
+        />
+      )}
     </div>
   );
 }

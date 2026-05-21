@@ -1,4 +1,10 @@
-import type { FsNode, ScanProgress, DriveInfo } from './types';
+import type {
+  FsNode,
+  ScanProgress,
+  DriveInfo,
+  DuplicateScanProgress,
+  DuplicateScanResult
+} from './types';
 
 declare global {
   interface Window {
@@ -11,6 +17,14 @@ declare global {
       windowMinimize: () => Promise<void>;
       windowToggleMaximize: () => Promise<void>;
       windowClose: () => Promise<void>;
+      findDuplicates: (folderPath: string) => Promise<DuplicateScanResult>;
+      trashFile: (path: string) => Promise<void>;
+      openTrash: () => Promise<void>;
+      onDuplicateProgress: (
+        callback: (progress: DuplicateScanProgress) => void
+      ) => () => void;
+      getLaunchPath: () => Promise<string | null>;
+      onScanPath: (callback: (path: string) => void) => () => void;
     };
   }
 }
