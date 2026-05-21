@@ -37,13 +37,24 @@ function getLaunchPathFromArgv(): string | null {
 }
 
 function createWindow(): BrowserWindow {
+  // Resolve a path to the brand icon that works in both dev and packaged
+  // builds. In packaged builds it's an extra resource sitting next to the
+  // .exe; in dev it's the file under build/ in the project root.
+  const iconFilename = process.platform === 'win32' ? 'icon.ico' : 'icon.png';
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, iconFilename)
+    : join(__dirname, '../../build', iconFilename);
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 800,
     minHeight: 500,
     title: 'Disk Analyzer',
-    backgroundColor: '#131720',
+    icon: iconPath,
+    // Match the default light theme background. Dark-theme users see a
+    // very brief light flash on startup; live with it for the simpler path.
+    backgroundColor: '#f6f7f9',
     show: false,
     autoHideMenuBar: true,
     frame: false,

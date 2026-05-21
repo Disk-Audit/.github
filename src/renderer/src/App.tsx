@@ -125,7 +125,9 @@ function TitleBar({
   return (
     <div className="titlebar">
       <Logo size={16} className="titlebar-logo" />
-      <span className="titlebar-brand">Disk Analyzer</span>
+      <span className="titlebar-brand">
+        Ledgeon <span className="titlebar-brand-dim">— Disk Analyzer</span>
+      </span>
       <div className="titlebar-controls">
         <button
           className="theme-toggle"
@@ -176,7 +178,7 @@ function getInitialTheme(): Theme {
   } catch {
     // localStorage might be unavailable in some sandboxed contexts
   }
-  return 'dark';
+  return 'light';
 }
 
 export function App(): JSX.Element {
