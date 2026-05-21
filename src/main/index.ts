@@ -6,33 +6,9 @@ import { join } from 'path';
 import { scan } from './scanner';
 import { listDrives } from './drives';
 import { tryRustWalk } from './rustWalker';
-import {
-  findDuplicates,
-  isPathSafeToTrash,
-  type DuplicateScanProgress
-} from './duplicates';
 
 // No File / Edit / View menu bar — this is a focused single-purpose app.
 Menu.setApplicationMenu(null);
-
-/**
- * Pull a folder path off argv if the app was launched with one — that's how
- * the OS context menu integration works on both Windows ("Scan with…" passes
- * `%V` as the last argument) and Linux (.desktop Actions pass `%f`).
- *
- * In dev mode the first user argv entry is often something like `.` or a
- * vite URL — we only accept absolute paths to avoid that case.
- */
-function getLaunchPathFromArgv(): string | null {
-  const args = process.argv.slice(app.isPackaged ? 1 : 2);
-  for (const a of args) {
-    if (!a || a.startsWith('-')) continue;
-    if (/^[A-Za-z]:[\\/]/.test(a) || a.startsWith('/')) {
-      return a;
-    }
-  }
-  return null;
-}
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -40,8 +16,8 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 800,
     minHeight: 500,
-    title: 'Ledgeon Disk Analyzer',
-    backgroundColor: '#131720',
+    title: 'Disk Analyzer',
+    backgroundColor: '#15171c',
     show: false,
     autoHideMenuBar: true,
     frame: false,
@@ -124,59 +100,10 @@ app.whenReady().then(() => {
     win.close();
   });
 
-  // Duplicate file scanner — streams progress via 'duplicate-progress' events
-  ipcMain.handle('find-duplicates', async (_event, folderPath: string) => {
-    const send = (p: DuplicateScanProgress): void => {
-      if (!win.isDestroyed()) win.webContents.send('duplicate-progress', p);
-    };
-    return await findDuplicates(folderPath, send);
-  });
-
-  // Send to Recycle Bin / Trash. Refuses paths inside system folders even
-  // though the renderer should never offer them in the first place.
-  ipcMain.handle('trash-file', async (_event, targetPath: string) => {
-    if (!isPathSafeToTrash(targetPath)) {
-      throw new Error(
-        'Refusing to trash file in a system-protected folder: ' + targetPath
-      );
-    }
-    await shell.trashItem(targetPath);
-  });
-
-  // Returns the path the app was launched with, if any (from context menu).
-  // The renderer calls this once on startup and auto-scans if it gets one.
-  ipcMain.handle('get-launch-path', () => getLaunchPathFromArgv());
-
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
-
-// On Windows, only allow one instance of the app at a time. If a second
-// instance launches (e.g. from a context-menu invocation), pass its arguments
-// to the first instance and focus that window.
-const gotLock = app.requestSingleInstanceLock();
-if (!gotLock) {
-  app.quit();
-} else {
-  app.on('second-instance', (_event, argv) => {
-    const wins = BrowserWindow.getAllWindows();
-    if (wins.length > 0) {
-      const win = wins[0];
-      if (win.isMinimized()) win.restore();
-      win.focus();
-      // Find a path in the new argv and tell the renderer to scan it
-      const args = argv.slice(app.isPackaged ? 1 : 2);
-      for (const a of args) {
-        if (!a || a.startsWith('-')) continue;
-        if (/^[A-Za-z]:[\\/]/.test(a) || a.startsWith('/')) {
-          win.webContents.send('scan-path', a);
-          break;
-        }
-      }
-    }
-  });
-}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

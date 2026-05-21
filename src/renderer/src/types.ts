@@ -26,39 +26,6 @@ export interface DriveInfo {
   mediaType: 'ssd' | 'hdd' | 'unknown';
 }
 
-export interface DuplicateFile {
-  path: string;
-  size: number;
-  mtimeMs: number;
-}
-
-export interface DuplicateGroup {
-  hash: string;
-  size: number;
-  files: DuplicateFile[];
-  wastedBytes: number;
-}
-
-export interface DuplicateScanProgress {
-  phase: 'sizing' | 'hashing' | 'done';
-  filesSeen: number;
-  candidatesHashed: number;
-  candidatesTotal: number;
-  currentPath: string;
-}
-
-export interface DuplicateScanResult {
-  groups: DuplicateGroup[];
-  totalWasted: number;
-  filesScanned: number;
-}
-
-export interface ExtensionBreakdown {
-  ext: string;
-  size: number;
-  count: number;
-}
-
 export function formatBytes(b: number): string {
   if (b < 1024) return `${b} B`;
   if (b < 1024 ** 2) return `${(b / 1024).toFixed(1)} KB`;
