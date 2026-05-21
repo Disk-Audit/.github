@@ -13,6 +13,7 @@ import { DuplicateFinder } from './components/DuplicateFinder';
 import { FileTypePanel } from './components/FileTypePanel';
 import { Logo } from './components/Logo';
 import { DriveSwitcher } from './components/DriveSwitcher';
+import { ToolsMenu } from './components/ToolsMenu';
 
 // ----- Tree helpers -----
 
@@ -106,6 +107,43 @@ function getDriveForPath(p: string, drives: DriveInfo[]): DriveInfo | null {
   return candidates[0] || null;
 }
 
+/** Remove a node from the tree and propagate the size change up to the
+ * root. Returns a new tree (does not mutate). If the path isn't found, the
+ * tree is returned unchanged. Used after individual file deletes so the UI
+ * updates without a costly full re-scan. */
+function removeNodeFromTree(root: FsNode, targetPath: string): FsNode {
+  let removedSize = 0;
+
+  function recurse(n: FsNode): FsNode {
+    if (!n.children) return n;
+    const matched = n.children.find((c) => c.path === targetPath);
+    if (matched) {
+      removedSize = matched.size;
+      return {
+        ...n,
+        size: n.size - removedSize,
+        children: n.children.filter((c) => c.path !== targetPath)
+      };
+    }
+    // Recurse into the child whose path is a prefix of the target
+    const idx = n.children.findIndex(
+      (c) => targetPath === c.path || targetPath.startsWith(c.path + '\\') || targetPath.startsWith(c.path + '/')
+    );
+    if (idx < 0) return n;
+    const newChild = recurse(n.children[idx]);
+    if (newChild === n.children[idx]) return n;
+    const newChildren = [...n.children];
+    newChildren[idx] = newChild;
+    return {
+      ...n,
+      size: n.size - removedSize,
+      children: newChildren
+    };
+  }
+
+  return recurse(root);
+}
+
 // ----- Navigation history -----
 
 interface History {
@@ -196,6 +234,24 @@ export function App(): JSX.Element {
   const [showDupes, setShowDupes] = useState(false);
   const [listView, setListView] = useState<'files' | 'types'>('files');
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [showFreeSpace, setShowFreeSpace] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('ledgeon-show-free-space');
+      // Default to ON if no preference is stored
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  });
+
+  // Persist the free-space preference
+  useEffect(() => {
+    try {
+      localStorage.setItem('ledgeon-show-free-space', String(showFreeSpace));
+    } catch {
+      /* ignore */
+    }
+  }, [showFreeSpace]);
 
   // Apply the theme to <html> and persist it
   useEffect(() => {
@@ -296,6 +352,40 @@ export function App(): JSX.Element {
     setHistory({ stack: [], index: -1 });
     setError(null);
   }, []);
+
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY. Don't move this below an
+  // early return — React requires the same hooks in the same order every
+  // render or the renderer crashes with a blank screen.
+  //
+  // When the user is looking at a drive root, inject a synthetic "(Free
+  // space)" sibling so the treemap shows the whole-drive picture (used vs
+  // free) instead of just the used portion. We only do this at the drive
+  // root — drilling into a subfolder hides it again, since the subfolder
+  // doesn't "own" the free space. Computed even before root exists; when
+  // root is null we just pass through.
+  const treemapNode = useMemo<FsNode | null>(() => {
+    if (!root || !currentNode) return null;
+    if (!showFreeSpace) return currentNode;
+    const atRoot = currentNode.path === root.path;
+    const drive = getDriveForPath(root.path, drives);
+    const stripSep = (p: string): string => p.replace(/[\\/]+$/, '');
+    const isDriveRoot =
+      drive && stripSep(drive.path) === stripSep(root.path);
+    if (!atRoot || !drive || drive.freeBytes <= 0 || !isDriveRoot) {
+      return currentNode;
+    }
+    const freeNode: FsNode = {
+      name: '(Free space)',
+      path: currentNode.path + '\\__free_space__',
+      size: drive.freeBytes,
+      type: 'file',
+      kind: 'free-space'
+    };
+    return {
+      ...currentNode,
+      children: [...(currentNode.children || []), freeNode]
+    };
+  }, [root, currentNode, drives, showFreeSpace]);
 
   // ----- Scanning view -----
   if (scanning) {
@@ -461,14 +551,11 @@ export function App(): JSX.Element {
           onNavigate={navigateTo}
         />
         <div className="toolbar-spacer"></div>
-        <button
-          className="dupe-btn"
-          onClick={() => setShowDupes(true)}
-          title="Find duplicate files in the current folder"
-        >
-          <i className="ti ti-copy" aria-hidden="true"></i>
-          <span>Find duplicates</span>
-        </button>
+        <ToolsMenu
+          onFindDuplicates={() => setShowDupes(true)}
+          showFreeSpace={showFreeSpace}
+          onToggleFreeSpace={() => setShowFreeSpace((v) => !v)}
+        />
         <DriveSwitcher
           drives={drives}
           currentPath={root.path}
@@ -478,7 +565,7 @@ export function App(): JSX.Element {
       </div>
       <div className="body">
         <div className="treemap-pane">
-          <Treemap node={currentNode} onDrillIn={navigateTo} />
+          <Treemap node={treemapNode || currentNode} onDrillIn={navigateTo} />
         </div>
         <div className="list-pane">
           <div className="list-pane-tabs">
@@ -499,7 +586,11 @@ export function App(): JSX.Element {
             <FileList
               node={currentNode}
               onDrillIn={navigateTo}
-              onFileTrashed={() => runScan(root.path)}
+              onFileTrashed={(path) =>
+                setRoot((prev) =>
+                  prev ? removeNodeFromTree(prev, path) : prev
+                )
+              }
             />
           ) : (
             <FileTypePanel node={currentNode} />

@@ -8,7 +8,8 @@ type SortKey = 'name' | 'size';
 interface FileListProps {
   node: FsNode;
   onDrillIn: (path: string) => void;
-  /** Called after a file is successfully trashed so the parent can re-scan. */
+  /** Called when a file was successfully trashed. Parent removes it from
+   * the tree client-side — no re-scan needed. */
   onFileTrashed?: (path: string) => void;
 }
 
@@ -17,6 +18,38 @@ interface ContextMenu {
   y: number;
   path: string;
   isBucket: boolean;
+  isProtected: boolean;
+}
+
+// Mirror of the main-process FORBIDDEN_SEGMENTS list. The IPC layer also
+// refuses to trash these, but checking here lets us hide the menu option
+// entirely so the user never sees an action they can't perform.
+const FORBIDDEN_SEGMENTS = new Set([
+  'windows',
+  'program files',
+  'program files (x86)',
+  'programdata',
+  'system volume information',
+  '$recycle.bin',
+  '$winreagent',
+  '$windows.~bt',
+  '$windows.~ws',
+  'proc',
+  'sys',
+  'dev',
+  'run',
+  'snap'
+]);
+
+function isPathProtected(p: string): boolean {
+  // Refuse to trash a drive root outright — empty body inside the slash check.
+  if (/^[A-Za-z]:[\\/]?$/.test(p)) return true;
+  if (p === '/' || p === '') return true;
+  const parts = p.split(/[\\/]/);
+  for (const part of parts) {
+    if (FORBIDDEN_SEGMENTS.has(part.toLowerCase())) return true;
+  }
+  return false;
 }
 
 function sortChildren(
@@ -85,7 +118,8 @@ export function FileList({
   function handleContextMenu(e: MouseEvent, path: string): void {
     e.preventDefault();
     const isBucket = path.endsWith('\\__small_files_bucket__');
-    setMenu({ x: e.clientX, y: e.clientY, path, isBucket });
+    const isProtected = isPathProtected(path);
+    setMenu({ x: e.clientX, y: e.clientY, path, isBucket, isProtected });
   }
 
   function handleOpenInExplorer(path: string): void {
@@ -208,12 +242,22 @@ export function FileList({
               <button onClick={() => handleOpenInExplorer(menu.path)}>
                 Open in Explorer
               </button>
-              <button
-                className="ctx-danger"
-                onClick={() => handleRequestDelete(menu.path)}
-              >
-                Send to Recycle Bin
-              </button>
+              {!menu.isProtected && (
+                <button
+                  className="ctx-danger"
+                  onClick={() => handleRequestDelete(menu.path)}
+                >
+                  Send to Recycle Bin
+                </button>
+              )}
+              {menu.isProtected && (
+                <div
+                  className="ctx-disabled"
+                  title="Protected system folder — deletion is not allowed"
+                >
+                  Protected — can't delete
+                </div>
+              )}
             </>
           )}
           {menu.isBucket && (
