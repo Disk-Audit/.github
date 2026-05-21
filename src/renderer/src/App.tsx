@@ -237,10 +237,10 @@ export function App(): JSX.Element {
   const [showFreeSpace, setShowFreeSpace] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem('ledgeon-show-free-space');
-      // Default to ON if no preference is stored
-      return stored === null ? true : stored === 'true';
+      // Default to OFF if no preference is stored
+      return stored === null ? false : stored === 'true';
     } catch {
-      return true;
+      return false;
     }
   });
 
