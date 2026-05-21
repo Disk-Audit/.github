@@ -31,8 +31,6 @@ export function Logo({ size = 24, className, style }: LogoProps): JSX.Element {
       <rect x="2" y="9" width="6" height="13" rx="0.5" fill="#7eb05f" />
       {/* Bottom horizontal — treemap "warning" amber forms the foot of the L */}
       <rect x="9" y="16" width="13" height="6" rx="0.5" fill="#c89a4e" />
-      {/* Nested rose square inside the amber — the treemap reference */}
-      <rect x="17" y="17" width="4" height="4" rx="0.5" fill="#b86b8b" />
     </svg>
   );
 }
