@@ -1,4 +1,4 @@
-# Disk Analyzer[](screenshot.PNG)
+# Disk Analyzer![screenshot](screenshot.PNG)
 
 A cross-platform disk space analyzer (Windows + Linux). Scans a drive or folder and shows what's eating the space as a treemap, with a sortable file list and a file-type breakdown alongside.
 
