@@ -92,15 +92,9 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
     const prunedRoot = prune(node, 0);
 
     const h = hierarchy<FsNode>(prunedRoot, (d) => d.children)
-      .sum((d) => {
-        if (d.children && d.children.length > 0) return 0;
-        // Square-root scaling — middle ground between true byte-proportional
-        // (which crushes small-but-important folders when one folder dominates)
-        // and full log scaling (which distorts proportions too much). A 100 GB
-        // folder renders ~10x larger than a 1 GB folder instead of 100x, but
-        // the relative size ordering stays intact and broadly truthful.
-        return Math.sqrt(Math.max(d.size, 0));
-      })
+      .sum((d) =>
+        d.children && d.children.length > 0 ? 0 : Math.max(d.size, 0)
+      )
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
     treemap<FsNode>()
