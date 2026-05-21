@@ -64,7 +64,15 @@ function findParent(
 }
 
 function countFiles(n: FsNode): number {
-  if (n.type === 'file') return 1;
+  if (n.type === 'file') {
+    // The Rust walker rolls small files (<1 MiB) into synthetic buckets
+    // named "(N small files)" or "(1 small file)" to keep the JSON manageable.
+    // Parse the real count out of the name so the status bar reports the true
+    // total instead of "1 per bucket".
+    const m = /^\((\d+) small files?\)$/.exec(n.name);
+    if (m) return parseInt(m[1], 10);
+    return 1;
+  }
   if (!n.children || n.children.length === 0) return 0;
   let c = 0;
   for (const child of n.children) c += countFiles(child);
