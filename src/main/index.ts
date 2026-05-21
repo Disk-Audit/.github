@@ -8,6 +8,8 @@ import { listDrives } from './drives';
 import { tryRustWalk } from './rustWalker';
 import {
   findDuplicates,
+  cancelDuplicateScan,
+  isScanCancelledError,
   isPathSafeToTrash,
   type DuplicateScanProgress
 } from './duplicates';
@@ -129,7 +131,22 @@ app.whenReady().then(() => {
     const send = (p: DuplicateScanProgress): void => {
       if (!win.isDestroyed()) win.webContents.send('duplicate-progress', p);
     };
-    return await findDuplicates(folderPath, send);
+    try {
+      return await findDuplicates(folderPath, send);
+    } catch (e) {
+      // Cancellation is expected — return a marker the renderer can ignore
+      // instead of bubbling it as an uncaught error.
+      if (isScanCancelledError(e)) {
+        return { cancelled: true } as const;
+      }
+      throw e;
+    }
+  });
+
+  // Forces any in-flight duplicate scan to abort at its next checkpoint.
+  // The renderer calls this when the user closes the modal mid-scan.
+  ipcMain.handle('cancel-duplicate-scan', () => {
+    cancelDuplicateScan();
   });
 
   // Send to Recycle Bin / Trash. Refuses paths inside system folders even

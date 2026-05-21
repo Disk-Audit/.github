@@ -37,6 +37,8 @@ const api = {
   trashFile: (path: string): Promise<void> =>
     ipcRenderer.invoke('trash-file', path),
   openTrash: (): Promise<void> => ipcRenderer.invoke('open-trash'),
+  cancelDuplicateScan: (): Promise<void> =>
+    ipcRenderer.invoke('cancel-duplicate-scan'),
   onDuplicateProgress: (
     callback: (progress: DuplicateProgress) => void
   ): (() => void) => {

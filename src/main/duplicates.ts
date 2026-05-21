@@ -74,8 +74,32 @@ function hashFile(filePath: string): Promise<string> {
   });
 }
 
+// Module-level scan generation token. Each call to findDuplicates captures
+// the current generation, then re-checks it at every cancellation point.
+// If the generation has been bumped — by a new scan or an explicit cancel —
+// the running scan bails out immediately instead of finishing in the void.
+let activeScanGeneration = 0;
+
+class ScanCancelledError extends Error {
+  constructor() {
+    super('Duplicate scan cancelled');
+    this.name = 'ScanCancelledError';
+  }
+}
+
+export function isScanCancelledError(e: unknown): boolean {
+  return e instanceof Error && e.name === 'ScanCancelledError';
+}
+
+/** Bumps the generation, forcing any in-flight scan to abort at its next
+ * cancellation checkpoint. Cheap and safe to call repeatedly. */
+export function cancelDuplicateScan(): void {
+  activeScanGeneration++;
+}
+
 async function collectCandidates(
   rootPath: string,
+  myGeneration: number,
   onProgress: (p: DuplicateScanProgress) => void
 ): Promise<DuplicateFile[]> {
   const out: DuplicateFile[] = [];
@@ -83,6 +107,11 @@ async function collectCandidates(
   let lastProgress = Date.now();
 
   async function walk(p: string): Promise<void> {
+    // Cancellation checkpoint — fired at every directory boundary, which is
+    // frequent enough to abort within a second or two on any tree.
+    if (myGeneration !== activeScanGeneration) {
+      throw new ScanCancelledError();
+    }
     if (isForbidden(p)) return;
     let entries: import('fs').Dirent[] = [];
     try {
@@ -129,6 +158,10 @@ export async function findDuplicates(
   rootPath: string,
   onProgress: (p: DuplicateScanProgress) => void
 ): Promise<DuplicateScanResult> {
+  // Bump the generation so any previously-running scan aborts, then capture
+  // our own generation. Equality check at every cancellation point.
+  const myGeneration = ++activeScanGeneration;
+
   // Normalize bare Windows drive letters: "C:" by itself refers to the
   // *current directory* on C: (a Win32 quirk), not the root. Append a slash
   // so fs.readdir actually walks from the top of the drive.
@@ -137,7 +170,7 @@ export async function findDuplicates(
     normalized = normalized + '\\';
   }
 
-  const candidates = await collectCandidates(normalized, onProgress);
+  const candidates = await collectCandidates(normalized, myGeneration, onProgress);
 
   // Group by size. Only sizes with >= 2 files can have duplicates.
   const bySize = new Map<number, DuplicateFile[]>();
@@ -158,6 +191,11 @@ export async function findDuplicates(
 
   for (const group of candidateGroups) {
     for (const f of group) {
+      // Cancellation checkpoint — once per file. Hashing a single file is
+      // bounded, so this gets us snappy cancellation.
+      if (myGeneration !== activeScanGeneration) {
+        throw new ScanCancelledError();
+      }
       try {
         const h = await hashFile(f.path);
         const key = `${f.size}:${h}`;

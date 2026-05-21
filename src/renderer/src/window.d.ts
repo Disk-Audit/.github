@@ -17,9 +17,12 @@ declare global {
       windowMinimize: () => Promise<void>;
       windowToggleMaximize: () => Promise<void>;
       windowClose: () => Promise<void>;
-      findDuplicates: (folderPath: string) => Promise<DuplicateScanResult>;
+      findDuplicates: (
+        folderPath: string
+      ) => Promise<DuplicateScanResult | { cancelled: true }>;
       trashFile: (path: string) => Promise<void>;
       openTrash: () => Promise<void>;
+      cancelDuplicateScan: () => Promise<void>;
       onDuplicateProgress: (
         callback: (progress: DuplicateScanProgress) => void
       ) => () => void;

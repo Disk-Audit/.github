@@ -52,9 +52,12 @@ export function DuplicateFinder({
       .findDuplicates(folderPath)
       .then((r) => {
         if (cancelled) return;
+        // Cancelled scans return a sentinel rather than the real result —
+        // the component has already started unmounting in that case, but be
+        // defensive and bail out anyway.
+        if ('cancelled' in r) return;
         setResult(r);
         setPhase('review');
-        // Default: pre-select all but the newest in every group
         const initial = new Set<string>();
         for (const g of r.groups) {
           for (let i = 1; i < g.files.length; i++) initial.add(g.files[i].path);
@@ -68,6 +71,12 @@ export function DuplicateFinder({
       });
     return () => {
       cancelled = true;
+      // Tell the main process to abort the walk/hash at its next checkpoint.
+      // Without this the scan would keep running in the background, wasting
+      // CPU and disk IO until it finished into the void.
+      window.api.cancelDuplicateScan().catch(() => {
+        /* ignore — the scan may have already finished naturally */
+      });
     };
   }, [folderPath]);
 
@@ -196,8 +205,16 @@ export function DuplicateFinder({
     }
   }, [safeSelected, onAfterDelete]);
 
+  // Don't dismiss on backdrop click while scanning or deleting — too easy
+  // to bump into. The X button stays available, and closing via X cancels
+  // the in-flight scan cleanly.
+  const handleBackdropClick = (): void => {
+    if (phase === 'scanning' || phase === 'deleting' || confirming) return;
+    onClose();
+  };
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={handleBackdropClick}>
       <div className="modal dupe-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Find duplicate files</h2>
