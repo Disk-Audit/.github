@@ -14,6 +14,7 @@ import { FileTypePanel } from './components/FileTypePanel';
 import { Logo } from './components/Logo';
 import { DriveSwitcher } from './components/DriveSwitcher';
 import { ToolsMenu } from './components/ToolsMenu';
+import { FolderHeader } from './components/FolderHeader';
 
 // ----- Tree helpers -----
 
@@ -216,7 +217,7 @@ function getInitialTheme(): Theme {
   } catch {
     // localStorage might be unavailable in some sandboxed contexts
   }
-  return 'dark';
+  return 'light';
 }
 
 export function App(): JSX.Element {
@@ -568,6 +569,7 @@ export function App(): JSX.Element {
           <Treemap node={treemapNode || currentNode} onDrillIn={navigateTo} />
         </div>
         <div className="list-pane">
+          <FolderHeader node={currentNode} root={root} />
           <div className="list-pane-tabs">
             <button
               className={`list-pane-tab${listView === 'files' ? ' active' : ''}`}

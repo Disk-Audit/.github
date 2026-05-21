@@ -2293,3 +2293,80 @@ button:disabled {
   color: var(--color-text-tertiary);
   font-family: var(--font-sans);
 }
+
+/* ----- Folder header (above the file list tabs) ----- */
+
+.folder-header {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  flex-shrink: 0;
+}
+
+.folder-header-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.folder-header-icon {
+  color: var(--accent);
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.folder-header-name {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.folder-header-pct {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--accent-success);
+  font-weight: 600;
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-background-tertiary);
+}
+
+.folder-header-path {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;       /* keep the tail of the path visible if it overflows */
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+.folder-header-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.folder-header-size {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.folder-header-sep {
+  color: var(--color-text-tertiary);
+}
