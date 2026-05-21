@@ -129,7 +129,15 @@ export async function findDuplicates(
   rootPath: string,
   onProgress: (p: DuplicateScanProgress) => void
 ): Promise<DuplicateScanResult> {
-  const candidates = await collectCandidates(rootPath, onProgress);
+  // Normalize bare Windows drive letters: "C:" by itself refers to the
+  // *current directory* on C: (a Win32 quirk), not the root. Append a slash
+  // so fs.readdir actually walks from the top of the drive.
+  let normalized = rootPath;
+  if (/^[A-Za-z]:$/.test(normalized)) {
+    normalized = normalized + '\\';
+  }
+
+  const candidates = await collectCandidates(normalized, onProgress);
 
   // Group by size. Only sizes with >= 2 files can have duplicates.
   const bySize = new Map<number, DuplicateFile[]>();

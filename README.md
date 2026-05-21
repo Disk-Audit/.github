@@ -1,4 +1,4 @@
-# Ledgeon Disk Analyzer
+# Disk Analyzer
 
 A cross-platform disk space analyzer (Windows + Linux). Scans a drive or folder and shows what's eating the space as a treemap, with a sortable file list and a file-type breakdown alongside.
 
@@ -8,9 +8,9 @@ Built with Electron + React + TypeScript for the UI, and a small Rust binary for
 
 Grab the latest installer from the [Releases page](https://github.com/ledgeon/Disk-Analyzer/releases). Run it, done.
 
-- **Windows:** NSIS installer (`.exe`) — adds a "Scan with Ledgeon" right-click menu item for folders and drives
+- **Windows:** NSIS installer (`.exe`) — adds a "Scan with Disk Analyzer" right-click menu item for folders and drives
 - **Linux (universal):** AppImage — make it executable and run it
-- **Linux (Debian/Ubuntu/Mint):** `.deb` — install with `sudo apt install ./ledgeon-disk-analyzer_*_amd64.deb`
+- **Linux (Debian/Ubuntu/Mint):** `.deb` — install with `sudo apt install ./disk-analyzer_*_amd64.deb`
 
 The rest of this README is for building from source.
 

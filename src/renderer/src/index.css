@@ -243,7 +243,7 @@ button:disabled {
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   cursor: pointer;
   border-radius: var(--border-radius-sm);
   padding: 0;
@@ -256,7 +256,7 @@ button:disabled {
 }
 
 .toolbar .nav-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.4;
   cursor: default;
 }
 
@@ -287,7 +287,7 @@ button:disabled {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 12.5px;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   cursor: pointer;
   border-radius: var(--border-radius-sm);
   white-space: nowrap;

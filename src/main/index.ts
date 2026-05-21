@@ -40,7 +40,7 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 800,
     minHeight: 500,
-    title: 'Ledgeon Disk Analyzer',
+    title: 'Disk Analyzer',
     backgroundColor: '#131720',
     show: false,
     autoHideMenuBar: true,

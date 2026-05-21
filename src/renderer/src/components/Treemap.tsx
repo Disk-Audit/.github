@@ -4,17 +4,19 @@ import type { FsNode } from '../types';
 import { formatBytes } from '../types';
 
 // Top 4 depth-1 children get the semantic palette; the rest fall back to
-// neutral. Deeper levels share their depth-1 ancestor's color group but get
-// progressively lighter via color-mix.
+// neutral. The treemap palette is LOCKED — same colors in both themes.
+// Using literal hex values lets the renderer paint without recomputing
+// color-mix() for every rectangle on every frame.
 const PALETTE = [
-  { bg: 'var(--color-background-info)', fg: 'var(--color-text-info)' },
-  { bg: 'var(--color-background-warning)', fg: 'var(--color-text-warning)' },
-  { bg: 'var(--color-background-success)', fg: 'var(--color-text-success)' },
-  { bg: 'var(--color-background-danger)', fg: 'var(--color-text-danger)' }
+  { bg: '#6da4cc', fg: '#0a1f31' }, // info — blue
+  { bg: '#c89a4e', fg: '#2c1f0a' }, // warning — amber
+  { bg: '#7eb05f', fg: '#112a08' }, // success — green
+  { bg: '#b86b8b', fg: '#2c0f1c' } //  danger — rose
 ];
+
 const NEUTRAL = {
-  bg: 'var(--color-background-secondary)',
-  fg: 'var(--color-text-secondary)'
+  bg: '#7f8590',
+  fg: '#1a1d22'
 };
 
 // Max recursion depth for layout/rendering. 4 is enough that the eye reads
@@ -44,19 +46,62 @@ interface LaidRect {
   hasChildren: boolean;
 }
 
-/** Mix the depth-1 color toward a theme-aware target as we go deeper, so
- * deeper rects fade in a way that suits both light and dark backgrounds. */
-function tintForDepth(baseBg: string, depth: number): string {
+/** Parse a #rrggbb string into [r,g,b]. Falls back to white on bad input. */
+function parseHex(hex: string): [number, number, number] {
+  const h = hex.replace('#', '').trim();
+  if (h.length !== 6) return [255, 255, 255];
+  return [
+    parseInt(h.substring(0, 2), 16) || 0,
+    parseInt(h.substring(2, 4), 16) || 0,
+    parseInt(h.substring(4, 6), 16) || 0
+  ];
+}
+
+function hex(r: number, g: number, b: number): string {
+  const c = (n: number): string =>
+    Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
+  return `#${c(r)}${c(g)}${c(b)}`;
+}
+
+/** Lerp baseBg toward tintTarget by ratio, in sRGB. */
+function mixColors(baseBg: string, tintTarget: string, ratio: number): string {
+  const [ar, ag, ab] = parseHex(baseBg);
+  const [br, bg, bb] = parseHex(tintTarget);
+  return hex(ar * (1 - ratio) + br * ratio, ag * (1 - ratio) + bg * ratio, ab * (1 - ratio) + bb * ratio);
+}
+
+/** Mix depth-1 color toward a theme-aware target as we go deeper. Result is
+ * a literal hex string so the browser can paint without running color-mix. */
+function tintForDepth(baseBg: string, depth: number, tintTarget: string): string {
   if (depth <= 1) return baseBg;
-  // depth 2: 30% diluted, depth 3: 55%, depth 4: 70%
-  const dilute = Math.min(15 + (depth - 1) * 20, 75);
-  return `color-mix(in srgb, ${baseBg} ${100 - dilute}%, var(--treemap-tint-target))`;
+  const dilute = Math.min(15 + (depth - 1) * 20, 75) / 100;
+  return mixColors(baseBg, tintTarget, dilute);
 }
 
 export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [hover, setHover] = useState<Hover | null>(null);
+  const [tintTarget, setTintTarget] = useState<string>('#ffffff');
+
+  // Re-read --treemap-tint-target whenever the theme attribute on <html>
+  // changes. The result is a hex string we plug directly into JS color math
+  // — no per-rectangle color-mix() at paint time.
+  useEffect(() => {
+    const readTint = (): void => {
+      const v = getComputedStyle(document.documentElement)
+        .getPropertyValue('--treemap-tint-target')
+        .trim();
+      if (v) setTintTarget(v);
+    };
+    readTint();
+    const mo = new MutationObserver(readTint);
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+    return () => mo.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -171,7 +216,7 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
               top: r.y,
               width: r.w,
               height: r.h,
-              background: tintForDepth(swatch.bg, r.depth),
+              background: tintForDepth(swatch.bg, r.depth, tintTarget),
               color: swatch.fg
             }}
             onClick={(e) => {

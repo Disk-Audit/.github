@@ -125,9 +125,7 @@ function TitleBar({
   return (
     <div className="titlebar">
       <Logo size={16} className="titlebar-logo" />
-      <span className="titlebar-brand">
-        Ledgeon <span className="titlebar-brand-dim">— Disk Analyzer</span>
-      </span>
+      <span className="titlebar-brand">Disk Analyzer</span>
       <div className="titlebar-controls">
         <button
           className="theme-toggle"
@@ -328,13 +326,9 @@ export function App(): JSX.Element {
         <TitleBar theme={theme} onToggleTheme={toggleTheme} />
         <div className="welcome">
           <Logo size={64} className="welcome-logo" />
-          <h1>
-            Ledgeon{' '}
-            <span className="welcome-h1-dim">— Disk Analyzer</span>
-          </h1>
+          <h1>Disk Analyzer</h1>
           <p className="welcome-tagline">
-            Map every byte across your drives. See what's eating your storage,
-            spot duplicates, and reclaim space — all from one place.
+            Select a drive to see what's using your storage.
           </p>
 
           {!drivesLoaded ? (
