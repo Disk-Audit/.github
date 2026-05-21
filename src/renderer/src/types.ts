@@ -6,6 +6,10 @@ export interface FsNode {
   children?: FsNode[];
   error?: string;
   ext?: string;
+  /** Optional tag for synthetic nodes (not real filesystem entries). When
+   * set, the renderer treats this node specially — no drill-in, no Open in
+   * Explorer, different styling. */
+  kind?: 'free-space';
 }
 
 export interface ScanProgress {

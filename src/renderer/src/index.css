@@ -2149,3 +2149,41 @@ button:disabled {
 .dupe-setup-actions i {
   font-size: 14px;
 }
+
+/* ----- Treemap: free-space rectangle ----- */
+/* Diagonal stripes mark "empty space, not files" — visually distinct from
+ * any data rectangle, regardless of color. */
+
+.treemap-rect.free-space {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(127, 133, 144, 0.18) 0,
+    rgba(127, 133, 144, 0.18) 6px,
+    rgba(127, 133, 144, 0.32) 6px,
+    rgba(127, 133, 144, 0.32) 12px
+  ) !important;
+  color: var(--color-text-secondary) !important;
+  cursor: default !important;
+  outline: 1px solid var(--color-border-secondary);
+}
+
+.treemap-rect.free-space:hover {
+  filter: none !important;
+}
+
+.treemap-rect.free-space .label {
+  font-style: italic;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+[data-theme='light'] .treemap-rect.free-space {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(120, 128, 140, 0.08) 0,
+    rgba(120, 128, 140, 0.08) 6px,
+    rgba(120, 128, 140, 0.22) 6px,
+    rgba(120, 128, 140, 0.22) 12px
+  ) !important;
+  color: var(--color-text-secondary) !important;
+}

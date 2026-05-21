@@ -196,9 +196,16 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
   return (
     <div ref={containerRef} className="treemap-container">
       {rects.map((r) => {
-        const swatch = r.rank < PALETTE.length ? PALETTE[r.rank] : NEUTRAL;
+        const isFreeSpace = r.node.kind === 'free-space';
+        const swatch = isFreeSpace
+          ? NEUTRAL
+          : r.rank < PALETTE.length
+            ? PALETTE[r.rank]
+            : NEUTRAL;
         const isDir = r.node.type === 'dir';
         const isBucket = r.node.path.endsWith('\\__small_files_bucket__');
+        // Free space, the small-files bucket, and leaves aren't clickable.
+        const isClickable = isDir && !isBucket && !isFreeSpace;
         // Labels: top-level dirs always (room is reserved); deeper rects
         // only when they're large enough.
         const showLabel =
@@ -210,17 +217,21 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
         return (
           <div
             key={r.node.path}
-            className={`treemap-rect${isDir && !isBucket ? ' clickable' : ''}${r.hasChildren ? ' has-children' : ''}`}
+            className={`treemap-rect${isClickable ? ' clickable' : ''}${r.hasChildren ? ' has-children' : ''}${isFreeSpace ? ' free-space' : ''}`}
             style={{
               left: r.x,
               top: r.y,
               width: r.w,
               height: r.h,
-              background: tintForDepth(swatch.bg, r.depth, tintTarget),
+              // Free space uses a flat neutral hex (already set via NEUTRAL)
+              // and doesn't get depth-tinted — it's always top-level anyway.
+              background: isFreeSpace
+                ? swatch.bg
+                : tintForDepth(swatch.bg, r.depth, tintTarget),
               color: swatch.fg
             }}
             onClick={(e) => {
-              if (isDir && !isBucket) {
+              if (isClickable) {
                 e.stopPropagation();
                 onDrillIn(r.node.path);
               }
@@ -253,10 +264,13 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
         >
           <div className="tooltip-name">{hover.node.name}</div>
           <div className="tooltip-meta">
-            {hover.node.type === 'dir' ? 'Folder · ' : ''}
-            {formatBytes(hover.node.size)}
+            {hover.node.kind === 'free-space'
+              ? `Unused space · ${formatBytes(hover.node.size)}`
+              : `${hover.node.type === 'dir' ? 'Folder · ' : ''}${formatBytes(hover.node.size)}`}
           </div>
-          <div className="tooltip-path">{hover.node.path}</div>
+          {hover.node.kind !== 'free-space' && (
+            <div className="tooltip-path">{hover.node.path}</div>
+          )}
         </div>
       )}
     </div>
