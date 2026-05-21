@@ -6,6 +6,14 @@ interface ScanProgress {
   currentPath: string;
 }
 
+interface DuplicateProgress {
+  phase: 'sizing' | 'hashing' | 'done';
+  filesSeen: number;
+  candidatesHashed: number;
+  candidatesTotal: number;
+  currentPath: string;
+}
+
 const api = {
   chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('choose-folder'),
   listDrives: () => ipcRenderer.invoke('list-drives'),
@@ -21,7 +29,38 @@ const api = {
   },
   windowMinimize: () => ipcRenderer.invoke('window-minimize'),
   windowToggleMaximize: () => ipcRenderer.invoke('window-toggle-maximize'),
-  windowClose: () => ipcRenderer.invoke('window-close')
+  windowClose: () => ipcRenderer.invoke('window-close'),
+
+  // Duplicate file finder + delete-to-trash
+  findDuplicates: (folderPath: string) =>
+    ipcRenderer.invoke('find-duplicates', folderPath),
+  trashFile: (path: string): Promise<void> =>
+    ipcRenderer.invoke('trash-file', path),
+  onDuplicateProgress: (
+    callback: (progress: DuplicateProgress) => void
+  ): (() => void) => {
+    const listener = (
+      _event: IpcRendererEvent,
+      progress: DuplicateProgress
+    ): void => callback(progress);
+    ipcRenderer.on('duplicate-progress', listener);
+    return () => {
+      ipcRenderer.off('duplicate-progress', listener);
+    };
+  },
+
+  // Context menu integration: the renderer asks for any launch path on startup
+  getLaunchPath: (): Promise<string | null> =>
+    ipcRenderer.invoke('get-launch-path'),
+  // And listens for paths arriving via a second-instance invocation while
+  // the app is already running.
+  onScanPath: (callback: (path: string) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, p: string): void => callback(p);
+    ipcRenderer.on('scan-path', listener);
+    return () => {
+      ipcRenderer.off('scan-path', listener);
+    };
+  }
 };
 
 contextBridge.exposeInMainWorld('api', api);

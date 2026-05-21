@@ -1,7 +1,7 @@
 {
-  "name": "disk-analyzer",
-  "version": "0.6.5",
-  "description": "A cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
+  "name": "ledgeon-disk-analyzer",
+  "version": "0.8.0",
+  "description": "Ledgeon Disk Analyzer — a cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
   "main": "./out/main/index.js",
   "author": "",
   "scripts": {
@@ -31,8 +31,8 @@
     "vite": "^5.1.3"
   },
   "build": {
-    "appId": "com.example.disk-analyzer",
-    "productName": "Disk Analyzer",
+    "appId": "io.ledgeon.disk-analyzer",
+    "productName": "Ledgeon Disk Analyzer",
     "files": [
       "out/**/*",
       "package.json"
@@ -46,11 +46,25 @@
         }
       ]
     },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
+    },
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "Utility",
-      "synopsis": "Disk space analyzer with treemap visualization",
-      "maintainer": "NF7UOS <nf7uos@gmail.com>"
+      "synopsis": "Ledgeon Disk Analyzer — visualize disk usage",
+      "maintainer": "NF7UOS <nf7uos@gmail.com>",
+      "desktop": {
+        "entry": {
+          "Name": "Ledgeon Disk Analyzer",
+          "Comment": "Visualise disk usage with a treemap",
+          "Categories": "Utility;System;FileTools;",
+          "Keywords": "disk;space;analyze;treemap;storage;ledgeon;"
+        }
+      }
     }
   }
 }
