@@ -52,9 +52,7 @@ function createWindow(): BrowserWindow {
     minHeight: 500,
     title: 'Disk Analyzer',
     icon: iconPath,
-    // Match the default light theme background. Dark-theme users see a
-    // very brief light flash on startup; live with it for the simpler path.
-    backgroundColor: '#f6f7f9',
+    backgroundColor: '#131720',
     show: false,
     autoHideMenuBar: true,
     frame: false,

@@ -216,7 +216,7 @@ function getInitialTheme(): Theme {
   } catch {
     // localStorage might be unavailable in some sandboxed contexts
   }
-  return 'light';
+  return 'dark';
 }
 
 export function App(): JSX.Element {
