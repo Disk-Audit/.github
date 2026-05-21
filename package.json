@@ -1,6 +1,6 @@
 {
   "name": "ledgeon-disk-analyzer",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Disk Analyzer — a cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
   "main": "./out/main/index.js",
   "author": "NF7UOS <nf7uos@gmail.com>",
@@ -58,7 +58,7 @@
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "Utility",
-      "icon": "build/icon.png",
+      "icon": "build/icons",
       "synopsis": "Disk space analyzer with treemap visualization",
       "maintainer": "NF7UOS <nf7uos@gmail.com>",
       "desktop": {
@@ -66,7 +66,8 @@
           "Name": "Disk Analyzer",
           "Comment": "Visualise disk usage with a treemap",
           "Categories": "Utility;System;FileTools;",
-          "Keywords": "disk;space;analyze;treemap;storage;"
+          "Keywords": "disk;space;analyze;treemap;storage;",
+          "Icon": "disk-analyzer"
         }
       }
     }

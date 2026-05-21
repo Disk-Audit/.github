@@ -14,7 +14,7 @@ interface DuplicateFinderProps {
   onAfterDelete?: () => void;
 }
 
-type Phase = 'scanning' | 'review' | 'deleting' | 'error';
+type Phase = 'setup' | 'scanning' | 'review' | 'deleting' | 'error';
 
 interface DeletionStatus {
   succeeded: number;
@@ -27,7 +27,10 @@ export function DuplicateFinder({
   onClose,
   onAfterDelete
 }: DuplicateFinderProps): JSX.Element {
-  const [phase, setPhase] = useState<Phase>('scanning');
+  const [phase, setPhase] = useState<Phase>('setup');
+  // The folder we'll actually scan. Defaults to whatever the parent passed
+  // (the user's current view), but the user can override before starting.
+  const [targetPath, setTargetPath] = useState<string>(folderPath);
   const [progress, setProgress] = useState<DuplicateScanProgress>({
     phase: 'sizing',
     filesSeen: 0,
@@ -47,14 +50,15 @@ export function DuplicateFinder({
   }, []);
 
   useEffect(() => {
+    // Scan only when the user has explicitly started one. The 'setup' phase
+    // exists so the user can confirm or change the folder before any work
+    // happens.
+    if (phase !== 'scanning') return;
     let cancelled = false;
     window.api
-      .findDuplicates(folderPath)
+      .findDuplicates(targetPath)
       .then((r) => {
         if (cancelled) return;
-        // Cancelled scans return a sentinel rather than the real result —
-        // the component has already started unmounting in that case, but be
-        // defensive and bail out anyway.
         if ('cancelled' in r) return;
         setResult(r);
         setPhase('review');
@@ -71,14 +75,33 @@ export function DuplicateFinder({
       });
     return () => {
       cancelled = true;
-      // Tell the main process to abort the walk/hash at its next checkpoint.
-      // Without this the scan would keep running in the background, wasting
-      // CPU and disk IO until it finished into the void.
       window.api.cancelDuplicateScan().catch(() => {
         /* ignore — the scan may have already finished naturally */
       });
     };
-  }, [folderPath]);
+  }, [phase, targetPath]);
+
+  const startScan = useCallback(() => {
+    // Reset transient state and flip into scanning. The useEffect picks up
+    // the phase transition and kicks off the real scan.
+    setResult(null);
+    setError(null);
+    setSelected(new Set());
+    setDeletionStatus(null);
+    setProgress({
+      phase: 'sizing',
+      filesSeen: 0,
+      candidatesHashed: 0,
+      candidatesTotal: 0,
+      currentPath: ''
+    });
+    setPhase('scanning');
+  }, []);
+
+  const pickDifferentFolder = useCallback(async () => {
+    const chosen = await window.api.chooseFolder();
+    if (chosen) setTargetPath(chosen);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -230,8 +253,55 @@ export function DuplicateFinder({
 
         <div className="modal-subhead">
           <span className="dim">in</span>
-          <code>{folderPath}</code>
+          <code>{targetPath}</code>
         </div>
+
+        {phase === 'setup' && (
+          <div className="dupe-setup">
+            <p className="dupe-setup-lead">
+              This scans the folder above for byte-identical duplicates,
+              groups them, and lets you send copies to the Recycle Bin.
+            </p>
+            <ul className="dupe-setup-rules">
+              <li>
+                <i className="ti ti-shield-check" aria-hidden="true"></i>
+                System folders (Windows, Program Files, $Recycle.Bin,
+                /proc, /sys, etc.) are skipped.
+              </li>
+              <li>
+                <i className="ti ti-file-minus" aria-hidden="true"></i>
+                Files smaller than 64 KB are skipped.
+              </li>
+              <li>
+                <i className="ti ti-checkbox" aria-hidden="true"></i>
+                Files are matched by SHA-256, not by name — only identical
+                content counts.
+              </li>
+              <li>
+                <i className="ti ti-trash" aria-hidden="true"></i>
+                Deleted files go to the Recycle Bin and can be restored.
+              </li>
+            </ul>
+            <p className="dupe-setup-hint">
+              Scanning a smaller folder (like{' '}
+              <code>Users\you\Downloads</code>) is faster and safer than
+              scanning a whole drive.
+            </p>
+            <div className="dupe-setup-actions">
+              <button
+                className="modal-secondary"
+                onClick={pickDifferentFolder}
+              >
+                <i className="ti ti-folder" aria-hidden="true"></i>
+                Choose different folder…
+              </button>
+              <button className="modal-primary" onClick={startScan}>
+                <i className="ti ti-search" aria-hidden="true"></i>
+                Start scanning
+              </button>
+            </div>
+          </div>
+        )}
 
         {phase === 'scanning' && (
           <div className="dupe-scanning">

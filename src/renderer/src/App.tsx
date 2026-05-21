@@ -328,7 +328,7 @@ export function App(): JSX.Element {
           <Logo size={64} className="welcome-logo" />
           <h1>Disk Analyzer</h1>
           <p className="welcome-tagline">
-            Select a drive to see what's using your storage.
+            Select a drive to see storage usage.
           </p>
 
           {!drivesLoaded ? (
