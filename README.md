@@ -65,7 +65,7 @@ npm run package
 npm run package:linux
 ```
 
-Both write installers to `dist/`. The GitHub Actions workflow in `.github/workflows/build.yml` builds both platforms automatically when you publish a release.
+Both write installers to `dist/`. The GitHub Actions workflow in `.github/workflows/build.yml` builds both platforms automatically.
 
 ## Usage
 
