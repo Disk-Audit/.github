@@ -163,10 +163,7 @@ function TitleBar({
 }): JSX.Element {
   return (
     <div className="titlebar">
-      <Logo size={16} className="titlebar-logo" />
-      <span className="titlebar-brand">
-        Ledgeon <span className="titlebar-brand-dim">— Disk Analyzer</span>
-      </span>
+      <span className="titlebar-brand">Ledgeon Disk Usage Analyzer</span>
       <div className="titlebar-controls">
         <button
           className="theme-toggle"
@@ -452,7 +449,9 @@ export function App(): JSX.Element {
                       <div className="drive-btn-row1">
                         <div className="drive-btn-names">
                           <span className="drive-btn-name">{displayName}</span>
-                          <span className="drive-btn-type">{typeLabel}</span>
+                          {displayName !== typeLabel && (
+                            <span className="drive-btn-type">{typeLabel}</span>
+                          )}
                         </div>
                         {d.totalBytes > 0 ? (
                           <span
@@ -469,7 +468,6 @@ export function App(): JSX.Element {
                       {d.totalBytes > 0 && (
                         <>
                           <div className="drive-btn-stats">
-                            <span className="drive-btn-used-label">Used</span>
                             <span className="drive-btn-used-value">
                               {formatBytes(used)}
                             </span>

@@ -10,6 +10,12 @@ mod walker;
 use std::env;
 use std::process::ExitCode;
 
+// Replace the system allocator. Directory walking is dominated by short-lived
+// String allocations (one per filesystem entry); mimalloc handles this pattern
+// substantially better than the default Windows heap.
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {

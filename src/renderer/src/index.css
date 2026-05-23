@@ -1,106 +1,97 @@
-/* ----- Design tokens (Ledgeon brand palette) ----- */
+/* ----- Design tokens — Linux Mint (Mint-Y) palette -----
+   Light theme is the default (Mint ships light). Dark theme available via
+   the toggle. Mint green accent (#86BE43, the Mint logo green) replaces the
+   navy-slate accent of the upstream Ledgeon theme. The treemap palette
+   itself stays locked — those four colors are part of the brand and the
+   tool's identity. */
 
 :root {
-  /* DARK THEME (default) — refined navy-slate dark */
-  --color-background-primary: #131720;
-  --color-background-secondary: #1a1f2a;
-  --color-background-tertiary: #0e1117;
-  --color-background-elevated: #20262f;
+  /* DEFAULT: Mint-Y LIGHT */
+  --color-background-primary: #fafafa;
+  --color-background-secondary: #ffffff;
+  --color-background-tertiary: #ededed;
+  --color-background-elevated: #ffffff;
 
-  /* Category-ramp backgrounds — used by Treemap.tsx for the top-4 folders
-     by size. DO NOT CHANGE — the treemap palette is locked. The brand
-     palette is derived FROM these so everything ties together. */
+  /* Treemap palette — UNCHANGED, locked by Treemap.tsx */
   --color-background-info: #6da4cc;
   --color-background-warning: #c89a4e;
   --color-background-success: #7eb05f;
   --color-background-danger: #b86b8b;
 
-  /* Text — neutral cool tones */
-  --color-text-primary: #e6e9ed;
-  --color-text-secondary: #9aa1ab;
-  --color-text-tertiary: #5d6571;
+  --color-text-primary: #2c2c2c;
+  --color-text-secondary: #5a5a5a;
+  --color-text-tertiary: #8a8a8a;
 
-  /* Dark text on the category backgrounds — DO NOT CHANGE */
+  --color-text-info: #0a1f31;
+  --color-text-warning: #2c1f0a;
+  --color-text-success: #112a08;
+  --color-text-danger: #2c0f1c;
+
+  --color-border-tertiary: rgba(0, 0, 0, 0.07);
+  --color-border-secondary: rgba(0, 0, 0, 0.16);
+
+  --treemap-tint-target: #f4f0e8;
+
+  /* Mint uses chunkier rounded corners than the upstream theme */
+  --border-radius-sm: 3px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+
+  /* Mint default UI font is Ubuntu; fall back to system stacks. */
+  --font-mono:
+    'Ubuntu Mono', 'JetBrains Mono', 'Cascadia Mono', 'Consolas',
+    ui-monospace, monospace;
+  --font-sans:
+    'Ubuntu', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Mint-Y signature mint green (#86BE43 is the official Mint logo green) */
+  --accent: #86BE43;
+  --accent-strong: #6ea535;
+  --accent-dim: #c5dfa2;
+  --accent-success: #5d8a2c;
+  --accent-green: var(--accent-success);
+
+  --color-warn: #c47c1e;
+  --color-danger: #c1503e;
+}
+
+/* ----- DARK THEME (Mint-Y Dark) ----- */
+
+[data-theme='dark'] {
+  --color-background-primary: #383838;
+  --color-background-secondary: #404040;
+  --color-background-tertiary: #2c2c2c;
+  --color-background-elevated: #4a4a4a;
+
+  --color-background-info: #6da4cc;
+  --color-background-warning: #c89a4e;
+  --color-background-success: #7eb05f;
+  --color-background-danger: #b86b8b;
+
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #a6a6a6;
+  --color-text-tertiary: #7a7a7a;
+
   --color-text-info: #0a1f31;
   --color-text-warning: #2c1f0a;
   --color-text-success: #112a08;
   --color-text-danger: #2c0f1c;
 
   --color-border-tertiary: rgba(255, 255, 255, 0.06);
-  --color-border-secondary: rgba(255, 255, 255, 0.18);
+  --color-border-secondary: rgba(255, 255, 255, 0.16);
 
-  /* Depth tinting target for the Treemap. Dark theme tints toward white so
-     deeper levels go pastel-light against the dark canvas. Light theme tints
-     toward a soft warm gray so deeper levels go pale without disappearing
-     into the light background. */
   --treemap-tint-target: #ffffff;
 
-  --border-radius-sm: 2px;
-  --border-radius-md: 3px;
-  --border-radius-lg: 4px;
-
-  --font-mono:
-    'JetBrains Mono', 'Cascadia Mono', 'Fira Code', 'Consolas',
-    ui-monospace, monospace;
-  --font-sans:
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
-  /* Body type default — monospace for the diskscan / terminal feel. Numbers
-     and paths in monospace; prose copy (welcome text, dialogs) gets to use
-     the proportional --font-sans where it reads better. */
-
-  /* ----- Brand accents — all drawn from the treemap palette ----- */
-  --accent: #6da4cc;
-  --accent-strong: #8ec0e2;
-  --accent-dim: #4d7a99;
-  --accent-success: #7eb05f;
-  /* Legacy alias */
+  /* Slightly brighter green in dark mode so it reads against the gray bg */
+  --accent: #95cb52;
+  --accent-strong: #b1da7a;
+  --accent-dim: #4d6e2a;
+  --accent-success: #95cb52;
   --accent-green: var(--accent-success);
 
-  /* Status colors */
-  --color-warn: #d4a14a;
-  --color-danger: #c95e7d;
-}
-
-/* ----- LIGHT THEME ----- */
-
-[data-theme='light'] {
-  --color-background-primary: #f6f7f9;
-  --color-background-secondary: #ffffff;
-  --color-background-tertiary: #eef1f5;
-  --color-background-elevated: #ffffff;
-
-  /* Treemap palette — UNCHANGED */
-  --color-background-info: #6da4cc;
-  --color-background-warning: #c89a4e;
-  --color-background-success: #7eb05f;
-  --color-background-danger: #b86b8b;
-
-  --color-text-primary: #1f2430;
-  --color-text-secondary: #5b6470;
-  --color-text-tertiary: #8a929e;
-
-  --color-text-info: #0a1f31;
-  --color-text-warning: #2c1f0a;
-  --color-text-success: #112a08;
-  --color-text-danger: #2c0f1c;
-
-  --color-border-tertiary: rgba(0, 0, 0, 0.08);
-  --color-border-secondary: rgba(0, 0, 0, 0.2);
-
-  /* In light mode, tinting toward pure white would make deep rectangles fade
-     into the page background. Mix toward a very pale warm gray so deeper
-     levels go pastel but stay visible. */
-  --treemap-tint-target: #f0e8e0;
-
-  --accent: #2f6f9c;
-  --accent-strong: #1d567f;
-  --accent-dim: #a4c4dd;
-  --accent-success: #4d8a36;
-  --accent-green: var(--accent-success);
-
-  --color-warn: #b07a26;
-  --color-danger: #b04760;
+  --color-warn: #d8a04f;
+  --color-danger: #d57865;
 }
 
 /* ----- Reset & base ----- */
@@ -344,6 +335,7 @@ button:disabled {
 .treemap-container {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 
 .treemap-empty {
@@ -356,8 +348,7 @@ button:disabled {
 
 .treemap-rect {
   position: absolute;
-  outline: 1px solid var(--color-background-primary);
-  outline-offset: -1px;
+  border: 1px solid var(--color-background-primary);
   border-radius: 0;
   padding: 4px 6px;
   display: flex;
@@ -808,63 +799,48 @@ button:disabled {
 
 .scan-progress-inner {
   width: 100%;
-  max-width: 520px;
+  max-width: 640px;
   text-align: center;
 }
 
-.scan-progress h2 {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  margin: 0 0 20px;
+.scan-progress-caption {
   font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: 12px;
 }
 
-.scan-progress .stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.scan-progress .stat {
-  background: var(--color-background-secondary);
-  padding: 12px;
-  border-radius: var(--border-radius-sm);
-  border: 1px solid var(--color-border-tertiary);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.scan-progress .stat .label {
-  font-size: 10.5px;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.5px;
-}
-
-.scan-progress .stat .value {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--accent-green);
-  margin-top: 4px;
-  font-variant-numeric: tabular-nums;
+.scan-progress-path {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: center;
+  margin-bottom: 22px;
+  min-height: 1.4em;
 }
 
 .scan-progress .indeterminate-bar {
   position: relative;
-  height: 3px;
+  height: 2px;
   background: var(--color-background-secondary);
   border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 
 .scan-progress .indeterminate-bar > div {
   position: absolute;
   height: 100%;
   width: 30%;
-  background: var(--accent-green);
+  background: var(--accent-success);
   border-radius: 2px;
   animation: indeterminate 1.4s ease-in-out infinite;
 }
@@ -875,14 +851,35 @@ button:disabled {
   100% { left: 100%; }
 }
 
-.scan-progress .current-path {
+.scan-progress-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 14px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.scan-stat-num {
+  font-weight: 400;
+  color: var(--color-text-primary);
+}
+
+.scan-stat-unit {
+  font-size: 11.5px;
   color: var(--color-text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
+}
+
+.scan-stat-sep {
+  color: var(--color-text-tertiary);
 }
 
 /* ----- List pane tabs (Files / Types) ----- */
@@ -1415,7 +1412,7 @@ button:disabled {
 }
 
 .titlebar-brand {
-  font-weight: 600;
+  font-weight: 400;
   color: var(--color-text-primary);
   letter-spacing: 0.3px;
 }
@@ -1436,9 +1433,9 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 4px 8px;
   font-size: 12px;
-  border: 1px solid var(--color-border-secondary);
+  border: 1px solid transparent;
   border-radius: var(--border-radius-sm);
   background: transparent;
   color: var(--color-text-primary);
@@ -1448,12 +1445,10 @@ button:disabled {
 
 .drive-switcher-trigger:hover {
   background: var(--color-background-secondary);
-  border-color: var(--accent-dim);
 }
 
-.drive-switcher-trigger > i:first-child {
-  color: var(--accent);
-  font-size: 14px;
+.drive-switcher-trigger[aria-expanded='true'] {
+  background: var(--color-background-secondary);
 }
 
 .drive-switcher-trigger .chevron {
@@ -1463,11 +1458,8 @@ button:disabled {
 }
 
 .drive-switcher-letter {
-  padding: 0 5px;
-  background: var(--color-background-tertiary);
-  color: var(--accent);
-  font-weight: 700;
-  border-radius: var(--border-radius-sm);
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .drive-switcher-label {
@@ -1475,6 +1467,7 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--color-text-secondary);
 }
 
 .drive-switcher-label.dim { color: var(--color-text-tertiary); }
@@ -1634,6 +1627,196 @@ button:disabled {
   font-size: 14px;
   color: var(--color-text-tertiary);
 }
+
+/* ----- Network drive variants -------------------------------------------- */
+
+.drive-switcher-item.network .drive-switcher-item-badge {
+  background: var(--color-background-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.drive-switcher-item.network .drive-switcher-item-badge i {
+  font-size: 14px;
+}
+
+.drive-switcher-item-unc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ----- Network location view (UNC entry + recents) ---------------------- */
+
+.drive-switcher-menu-network .drive-switcher-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drive-switcher-back {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.drive-switcher-back:hover {
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+}
+
+.drive-switcher-back i { font-size: 13px; }
+
+.drive-switcher-unc-form {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px 4px;
+}
+
+.drive-switcher-unc-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 6px;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  transition: border-color 100ms ease;
+}
+
+.drive-switcher-unc-input:focus {
+  outline: none;
+  border-color: var(--color-text-secondary);
+}
+
+.drive-switcher-unc-input.invalid {
+  border-color: #d4a14a;
+}
+
+.drive-switcher-unc-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.drive-switcher-unc-submit {
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 6px;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.drive-switcher-unc-submit:hover:not(:disabled) {
+  background: var(--color-text-primary);
+  color: var(--color-background-primary);
+}
+
+.drive-switcher-unc-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.drive-switcher-unc-error {
+  padding: 0 12px 6px;
+  font-size: 11px;
+  color: #d4a14a;
+  font-family: var(--font-mono);
+}
+
+.drive-switcher-unc-hint {
+  padding: 4px 12px 10px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+}
+
+.drive-switcher-unc-hint code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-text-secondary);
+  background: var(--color-background-secondary);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 2px;
+}
+
+/* ----- Recent network locations ----------------------------------------- */
+
+.drive-switcher-recent {
+  display: flex;
+  align-items: stretch;
+}
+
+.drive-switcher-recent-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.drive-switcher-recent-main:hover { background: var(--color-background-secondary); }
+
+.drive-switcher-recent-main i {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  flex: 0 0 auto;
+}
+
+.drive-switcher-recent-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
+.drive-switcher-recent-remove {
+  width: 28px;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 100ms ease, background 100ms ease;
+}
+
+.drive-switcher-recent-remove:hover {
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+}
+
+.drive-switcher-recent-remove i { font-size: 12px; }
 
 /* ----- Status bar additions ----- */
 
@@ -2164,7 +2347,7 @@ button:disabled {
   ) !important;
   color: var(--color-text-secondary) !important;
   cursor: default !important;
-  outline: 1px solid var(--color-border-secondary);
+  border: 1px solid var(--color-border-secondary);
 }
 
 .treemap-rect.free-space:hover {
@@ -2199,9 +2382,9 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 4px 8px;
   font-size: 12px;
-  border: 1px solid var(--color-border-secondary);
+  border: 1px solid transparent;
   border-radius: var(--border-radius-sm);
   background: transparent;
   color: var(--color-text-primary);
@@ -2211,12 +2394,10 @@ button:disabled {
 
 .tools-trigger:hover {
   background: var(--color-background-secondary);
-  border-color: var(--accent-dim);
 }
 
-.tools-trigger > i:first-child {
-  color: var(--accent);
-  font-size: 14px;
+.tools-trigger[aria-expanded='true'] {
+  background: var(--color-background-secondary);
 }
 
 .tools-trigger .chevron {
@@ -2369,4 +2550,368 @@ button:disabled {
 
 .folder-header-sep {
   color: var(--color-text-tertiary);
+}
+
+
+/* ============================================================================
+ * MINT THEME — STRUCTURAL OVERRIDES
+ *
+ * Token swaps live at the top of the file. This block changes the few things
+ * that need real structural tweaks: the title bar treatment, button feel,
+ * file list row styling, scrollbars, and rounded surfaces — to match the
+ * Mint-Y Cinnamon feel.
+ * ========================================================================== */
+
+/* Body default font becomes sans-serif (Ubuntu/Noto Sans). Numbers and
+   paths still get monospace via the specific rules below. */
+html, body {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+}
+
+/* ----- Title bar — Mint-style centered title, soft gray panel ------------ */
+
+.titlebar {
+  background: var(--color-background-tertiary);
+  border-bottom: 1px solid var(--color-border-tertiary);
+  position: relative;
+  justify-content: center;
+}
+
+[data-theme='dark'] .titlebar {
+  background: var(--color-background-tertiary);
+}
+
+.titlebar-brand {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  letter-spacing: 0;
+}
+
+.titlebar-controls {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.titlebar-controls button {
+  width: 42px;
+  transition: background 120ms ease;
+}
+
+.titlebar-controls button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] .titlebar-controls button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.titlebar-controls button.close:hover {
+  background: #d42a2a;
+  color: #ffffff;
+}
+
+/* ----- Toolbar buttons — Mint-Y button feel ----------------------------- */
+
+.toolbar {
+  background: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border-tertiary);
+}
+
+.nav-btn, .toolbar button {
+  border-radius: var(--border-radius-sm);
+  transition: background 120ms ease;
+}
+
+.tools-trigger, .drive-switcher-trigger {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border-radius: var(--border-radius-sm);
+  padding: 4px 10px;
+}
+
+/* ----- File list — Nemo-style rows, mint green selection ---------------- */
+
+.row {
+  font-family: var(--font-sans);
+  border-radius: 0;
+  padding: 4px 10px;
+}
+
+.row:hover:not(.selected) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme='dark'] .row:hover:not(.selected) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.row.selected {
+  background: var(--accent-dim);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .row.selected {
+  background: var(--accent-dim);
+}
+
+.row.selected .col-size,
+.row.selected .col-pct,
+.row.selected .name-text {
+  color: var(--color-text-primary);
+}
+
+/* Numbers stay monospace for column alignment */
+.col-size, .col-pct {
+  font-family: var(--font-mono);
+}
+
+/* List header */
+.list-header {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  background: var(--color-background-tertiary);
+  border-bottom: 1px solid var(--color-border-tertiary);
+  padding: 6px 10px;
+}
+
+/* Search input — Mint-Y rounded entry */
+.file-list-search input {
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-primary);
+  font-family: var(--font-sans);
+}
+
+.file-list-search input:focus {
+  border-color: var(--accent);
+}
+
+/* ----- Tabs (Files / Types) — Mint-Y tab bar style ---------------------- */
+
+.tabs {
+  background: var(--color-background-tertiary);
+  border-bottom: 1px solid var(--color-border-tertiary);
+}
+
+.tabs button {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.tabs button.active {
+  color: var(--accent-strong);
+  border-bottom-color: var(--accent);
+}
+
+/* ----- Folder header — clean Mint card ---------------------------------- */
+
+.folder-header {
+  background: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border-tertiary);
+  padding: 14px 16px 12px;
+}
+
+.folder-header-name {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.folder-header-pct {
+  font-family: var(--font-mono);
+  background: var(--accent-dim);
+  color: var(--accent-success);
+  padding: 1px 7px;
+  border-radius: var(--border-radius-sm);
+  font-size: 10.5px;
+}
+
+.folder-header-path {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.folder-header-stats {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.folder-header-size {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ----- Treemap — Mint border treatment ---------------------------------- */
+
+.treemap-rect {
+  border: 1px solid var(--color-background-primary);
+}
+
+.treemap-rect .label,
+.treemap-rect .sublabel {
+  font-family: var(--font-sans);
+}
+
+/* ----- Welcome screen — Mint-Y card style ------------------------------- */
+
+.welcome-title, .welcome h1 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.drive-btn {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.drive-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(134, 190, 67, 0.18);
+}
+
+.drive-btn-letter {
+  background: var(--accent-dim);
+  color: var(--accent-success);
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.drive-btn-name {
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.drive-btn-bar-fill {
+  background: var(--accent);
+}
+
+.drive-btn-bar-fill.full {
+  background: var(--color-warn);
+}
+
+/* ----- Dropdown menus — Mint-Y panel feel ------------------------------- */
+
+.tools-menu-panel, .drive-switcher-menu {
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-secondary);
+  background: var(--color-background-elevated);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='dark'] .tools-menu-panel,
+[data-theme='dark'] .drive-switcher-menu {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.drive-switcher-item:hover {
+  background: var(--color-background-tertiary);
+}
+
+.drive-switcher-item.current {
+  background: var(--accent-dim);
+}
+
+.drive-switcher-item-badge {
+  background: var(--accent-dim);
+  color: var(--accent-success);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.drive-switcher-item-bar-fill {
+  background: var(--accent);
+}
+
+/* ----- Scrollbars — thin Mint-Y style ----------------------------------- */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border: 2px solid var(--color-background-primary);
+  border-radius: 8px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+  background-clip: padding-box;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--color-background-primary);
+  background-clip: padding-box;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.26);
+  background-clip: padding-box;
+}
+
+/* ----- Status bar — Mint-Y bottom panel feel ---------------------------- */
+
+.status-bar {
+  background: var(--color-background-tertiary);
+  border-top: 1px solid var(--color-border-tertiary);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+}
+
+.status-bar .mono,
+.status-bar .status-drive,
+.status-bar .status-numbers {
+  font-family: var(--font-mono);
+}
+
+/* ----- Modal / dialog — Mint-Y card --------------------------------- */
+
+.modal, .confirm-modal, .dupe-modal {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-border-secondary);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.20);
+}
+
+[data-theme='dark'] .modal,
+[data-theme='dark'] .confirm-modal,
+[data-theme='dark'] .dupe-modal {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+.modal-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-radius: var(--border-radius-md);
+  font-weight: 500;
+}
+
+.modal-primary:hover {
+  background: var(--accent-strong);
+}
+
+.modal-cancel, .modal-secondary {
+  border-radius: var(--border-radius-md);
 }
