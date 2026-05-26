@@ -173,35 +173,18 @@ fn scan_inner(
 
     let entries = entries.into_inner().unwrap_or_default();
 
-    // Diagnostic: dump the first few entries so we can see what
-    // ntfs-reader actually returns for name/path/is_directory. Logged to
-    // stderr where the Node side captures it for the dev console; doesn't
-    // affect the JSON output stream on stdout.
-    eprintln!("MFT-DEBUG: total entries collected = {}", entries.len());
-    for (i, e) in entries.iter().take(8).enumerate() {
-        eprintln!(
-            "MFT-DEBUG: sample[{}] name={:?} full_path={:?} parent={:?} is_dir={} size={}",
-            i, e.name, e.full_path, e.parent_path, e.is_dir, e.size
-        );
-    }
-
     if let Ok(mut p) = progress.current_path.try_lock() {
         *p = format!("Building tree from {} entries", entries.len());
     }
 
     let tree = build_tree(entries, &root_clean);
 
-    // Safety check: if the MFT scan completes but the resulting root has
-    // no children, something's gone wrong with the path reconstruction —
-    // typical cause: ntfs-reader's cacheless FileInfo doesn't populate the
-    // path field, so every entry computes the same empty parent and
-    // nothing gets indexed under the root. Bail with an error so the Node
-    // dispatcher falls through to the walker. The user gets a working
-    // scan even when MFT is broken.
+    // Safety net: if for some reason MFT iteration produces a tree with no
+    // top-level children, surface an error so the Node dispatcher falls
+    // through to the walker. Should never fire in practice now that path
+    // reconstruction works, but cheap to keep as defensive insurance.
     if tree.children.is_empty() {
-        anyhow::bail!(
-            "MFT scan produced an empty tree (likely cacheless path issue); falling back to walker"
-        );
+        anyhow::bail!("MFT scan returned no entries; falling back to walker");
     }
 
     Ok(tree)
