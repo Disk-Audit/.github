@@ -6,6 +6,7 @@ import { join } from 'path';
 import { scan } from './scanner';
 import { listDrives } from './drives';
 import { tryRustWalk } from './rustWalker';
+import { tryMftScan, isDriveRoot, driveLetterOf } from './mftScan';
 import {
   findDuplicates,
   cancelDuplicateScan,
@@ -99,9 +100,45 @@ app.whenReady().then(() => {
       if (!win.isDestroyed()) win.webContents.send('scan-progress', progress);
     };
 
-    // Try the Rust walker first on Windows. No UAC. Falls back to Node if
-    // the binary is missing or fails.
     if (process.platform === 'win32') {
+      // Tier 1: MFT-based fast scan for local NTFS drive roots.
+      //
+      // Reads the NTFS Master File Table directly via ntfs-reader. Requires
+      // admin to open the raw volume; if not elevated, Volume::new fails
+      // fast and we fall through to the walker. Whole-volume only — for
+      // subdirectory scans the walker is the right tool.
+      if (isDriveRoot(folderPath)) {
+        const letter = driveLetterOf(folderPath);
+        if (letter) {
+          try {
+            const drives = await listDrives();
+            const d = drives.find(
+              (x) => x.letter.replace(':', '').toUpperCase() === letter
+            );
+            const eligible =
+              d &&
+              d.driveType === 'fixed' &&
+              d.fileSystem.toUpperCase() === 'NTFS';
+            if (eligible) {
+              console.log(`[scan] attempting MFT scan for ${letter}:`);
+              const tMft = Date.now();
+              const mft = await tryMftScan(letter, sendProgress);
+              if (mft) {
+                console.log(
+                  `[scan] MFT scan succeeded in ${((Date.now() - tMft) / 1000).toFixed(1)}s`
+                );
+                return mft;
+              }
+              console.log('[scan] MFT unavailable — falling through to walker');
+            }
+          } catch (e) {
+            console.warn('[scan] MFT eligibility check failed:', e);
+          }
+        }
+      }
+
+      // Tier 2: FindFirstFile walker — works without admin and on
+      // subdirectories, FAT32, removable drives, network paths.
       console.log('[scan] attempting Rust walker for', folderPath);
       const start = Date.now();
       const result = await tryRustWalk(folderPath, sendProgress);
@@ -114,6 +151,7 @@ app.whenReady().then(() => {
       console.log('[scan] falling back to Node scanner');
     }
 
+    // Tier 3: pure-Node walker. Cross-platform safety net.
     return await scan(folderPath, sendProgress);
   });
 

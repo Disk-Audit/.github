@@ -98,10 +98,10 @@ extern "system" {
 
 // --- Shared progress state ---
 
-struct Progress {
-    files: AtomicU64,
-    bytes: AtomicU64,
-    current_path: Mutex<String>,
+pub struct Progress {
+    pub files: AtomicU64,
+    pub bytes: AtomicU64,
+    pub current_path: Mutex<String>,
 }
 
 // --- Entry point ---
@@ -153,7 +153,7 @@ pub fn walk(root: &str) -> Result<()> {
     Ok(())
 }
 
-fn emit_progress(progress: &Progress) {
+pub fn emit_progress(progress: &Progress) {
     let files = progress.files.load(Ordering::Relaxed);
     let bytes = progress.bytes.load(Ordering::Relaxed);
     // try_lock — if some worker is mid-update, just use the last known
@@ -283,17 +283,20 @@ fn walk_dir(dir_path: &str, progress: &Arc<Progress>) -> JsonNode {
     //
     // Directory totals are unaffected — every file's size still contributes.
     const SMALL_FILE_THRESHOLD: u64 = 1024 * 1024; // 1 MiB
+    // Only collapse small files into a "(N small files)" bucket when
+    // there are enough of them to actually justify hiding the individual
+    // names. Below this count, the JSON savings are trivial and the user
+    // just wants to see what's in their folder.
+    const BUCKET_MIN_COUNT: usize = 20;
 
     let mut children: Vec<JsonNode> = Vec::with_capacity(entries.len());
     let mut total_size: u64 = 0;
-    let mut small_count: u64 = 0;
-    let mut small_total: u64 = 0;
+    let mut small_files: Vec<DirEntry> = Vec::new();
 
     for e in entries.into_iter().filter(|e| !e.is_dir) {
         total_size += e.size;
         if e.size < SMALL_FILE_THRESHOLD {
-            small_count += 1;
-            small_total += e.size;
+            small_files.push(e);
             continue;
         }
         let ext = get_extension(&e.name);
@@ -309,17 +312,14 @@ fn walk_dir(dir_path: &str, progress: &Arc<Progress>) -> JsonNode {
         });
     }
 
-    if small_count > 0 {
-        let bucket_name = if small_count == 1 {
-            "(1 small file)".to_string()
-        } else {
-            format!("({} small files)", small_count)
-        };
-        // Synthetic path — doesn't correspond to a real filesystem entry.
-        // Right-clicking it for "Open in Explorer" will silently no-op,
-        // which is the right behavior since it represents many files.
+    if small_files.len() >= BUCKET_MIN_COUNT {
+        // Lots of small files — aggregate into a single bucket node.
+        // Synthetic path; "Open in Explorer" will no-op, which is fine
+        // because the bucket represents many files at once.
+        let small_count = small_files.len();
+        let small_total: u64 = small_files.iter().map(|e| e.size).sum();
         children.push(JsonNode {
-            name: bucket_name,
+            name: format!("({} small files)", small_count),
             path: format!("{}\\__small_files_bucket__", dir_path),
             size: small_total,
             node_type: "file",
@@ -327,6 +327,22 @@ fn walk_dir(dir_path: &str, progress: &Arc<Progress>) -> JsonNode {
             ext: None,
             error: None,
         });
+    } else {
+        // Few small files — show each one. The JSON cost is negligible
+        // and the user can actually see what's in the folder.
+        for e in small_files {
+            let ext = get_extension(&e.name);
+            let path = format!("{}\\{}", dir_path, e.name);
+            children.push(JsonNode {
+                name: e.name,
+                path,
+                size: e.size,
+                node_type: "file",
+                children: Vec::new(),
+                ext,
+                error: None,
+            });
+        }
     }
 
     for sub in subdir_nodes {
@@ -361,7 +377,7 @@ fn path_basename(path: &str) -> String {
     }
 }
 
-fn get_extension(name: &str) -> Option<String> {
+pub fn get_extension(name: &str) -> Option<String> {
     let dot = name.rfind('.')?;
     if dot == 0 || dot == name.len() - 1 {
         return None;

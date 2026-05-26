@@ -1,6 +1,6 @@
 {
   "name": "ledgeon-disk-analyzer",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "description": "Disk Analyzer — a cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
   "main": "./out/main/index.js",
   "author": "NF7UOS <nf7uos@gmail.com>",
@@ -37,6 +37,12 @@
       "out/**/*",
       "package.json"
     ],
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
+    },
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
@@ -50,12 +56,6 @@
           "to": "icon.ico"
         }
       ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": true,
-      "allowToChangeInstallationDirectory": true,
-      "include": "build/installer.nsh"
     },
     "linux": {
       "target": ["AppImage", "deb"],
