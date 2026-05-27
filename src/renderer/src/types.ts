@@ -20,14 +20,17 @@ export interface ScanProgress {
 
 export interface DriveInfo {
   letter: string;
-  /** Full scannable path. "C:\\" on Windows, "/" or "/home" on Linux. */
+  /** Full scannable path. "C:\\" on Windows, "\\\\server\\share\\" for
+   * network mappings, "/" or "/home" on Linux. */
   path: string;
   label: string;
   totalBytes: number;
   freeBytes: number;
   fileSystem: string;
-  driveType: 'fixed' | 'removable';
+  driveType: 'fixed' | 'removable' | 'network';
   mediaType: 'ssd' | 'hdd' | 'unknown';
+  /** UNC path a mapped letter points to. Empty/absent for local drives. */
+  remotePath?: string;
 }
 
 export interface DuplicateFile {

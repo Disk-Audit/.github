@@ -1,6 +1,6 @@
 {
   "name": "ledgeon-disk-analyzer",
-  "version": "1.3.0",
+  "version": "1.4.8",
   "description": "Disk Analyzer — a cross-platform (Windows + Linux) disk space analyzer with treemap visualization",
   "main": "./out/main/index.js",
   "author": "NF7UOS <nf7uos@gmail.com>",
@@ -37,9 +37,16 @@
       "out/**/*",
       "package.json"
     ],
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
+    },
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator",
       "extraResources": [
         {
           "from": "mft_scanner/target/release/mft_scanner.exe",
@@ -51,12 +58,6 @@
         }
       ]
     },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": true,
-      "allowToChangeInstallationDirectory": true,
-      "include": "build/installer.nsh"
-    },
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "Utility",
@@ -67,6 +68,10 @@
         {
           "from": "build/icon.png",
           "to": "icon.png"
+        },
+        {
+          "from": "build/disk-analyzer.nemo_action",
+          "to": "disk-analyzer.nemo_action"
         }
       ],
       "desktop": {
@@ -75,9 +80,14 @@
           "Comment": "Visualise disk usage with a treemap",
           "Categories": "Utility;System;FileTools;",
           "Keywords": "disk;space;analyze;treemap;storage;",
-          "Icon": "disk-analyzer"
+          "Icon": "disk-analyzer",
+          "MimeType": "inode/directory;"
         }
       }
+    },
+    "deb": {
+      "afterInstall": "build/linux-after-install.sh",
+      "afterRemove": "build/linux-before-remove.sh"
     }
   }
 }

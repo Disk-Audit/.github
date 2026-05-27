@@ -1,6 +1,6 @@
 [package]
 name = "mft_scanner"
-version = "0.2.0"
+version = "0.4.1"
 edition = "2021"
 
 [profile.release]
@@ -14,3 +14,19 @@ anyhow = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rayon = "1"
+# Microsoft Research's allocator. Cuts ~10-20% off scan time on alloc-heavy
+# workloads like ours (one String per file/dir entry). No unsafe API surface
+# is needed — just register it as the global allocator in main.rs.
+mimalloc = { version = "0.1", default-features = false }
+# MFT-based fast scanner for local NTFS volumes. Higher-level wrapper
+# around the `ntfs` crate that handles raw volume access, MFT iteration,
+# and path reconstruction. Requires admin to open `\\.\C:` raw, so the
+# binary's manifest sets requestedExecutionLevel: admin and the dispatcher
+# silently falls through to the FindFirstFile walker if elevation isn't
+# present.
+#
+# Pinned to 0.3 deliberately — 0.4.x regressed `Mft::new` from ~30s to
+# ~200s on multi-million-entry volumes (see probe results May 2026).
+# Don't bump without re-running the probe and confirming the regression
+# is fixed upstream.
+ntfs-reader = "0.3"

@@ -44,7 +44,6 @@ export function ToolsMenu({
         aria-expanded={open}
         title="Tools and view options"
       >
-        <i className="ti ti-tool" aria-hidden="true"></i>
         <span>Tools</span>
         <i className="ti ti-chevron-down chevron" aria-hidden="true"></i>
       </button>

@@ -157,6 +157,21 @@ export function Treemap({ node, onDrillIn }: TreemapProps): JSX.Element {
       })
       .round(true)(h);
 
+    // Belt-and-suspenders against d3-treemap rounding edge cases: ensure
+    // every descendant sits inside its parent's bounds. With .round(true),
+    // each rectangle rounds independently after the layout pass, so a
+    // child's edge can land 1-2px past its parent's edge in rare cases
+    // (typically when the parent is small and paddingTop eats most of its
+    // height). Pre-order so each node sees its already-clamped parent.
+    h.eachBefore((n) => {
+      if (!n.parent) return;
+      const p = n.parent;
+      if (n.x0 != null && p.x0 != null && n.x0 < p.x0) n.x0 = p.x0;
+      if (n.y0 != null && p.y0 != null && n.y0 < p.y0) n.y0 = p.y0;
+      if (n.x1 != null && p.x1 != null && n.x1 > p.x1) n.x1 = p.x1;
+      if (n.y1 != null && p.y1 != null && n.y1 > p.y1) n.y1 = p.y1;
+    });
+
     // Find the depth-1 ancestor's path so we can color by group
     function topAncestorPath(n: HierarchyRectangularNode<FsNode>): string {
       let cur: HierarchyRectangularNode<FsNode> | null = n;

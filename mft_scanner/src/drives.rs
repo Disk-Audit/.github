@@ -7,6 +7,7 @@ use std::os::windows::ffi::OsStrExt;
 
 const DRIVE_REMOVABLE: u32 = 2;
 const DRIVE_FIXED: u32 = 3;
+const DRIVE_REMOTE: u32 = 4;
 const SEM_FAILCRITICALERRORS: u32 = 0x0001;
 
 // CreateFile constants
@@ -78,9 +79,25 @@ extern "system" {
     fn CloseHandle(object: isize) -> i32;
 }
 
+// Resolves a mapped drive letter ("Z:") to its underlying UNC path
+// ("\\\\server\\share"). Returns 0 on success. NO_ERROR_CONNECTION = 2250
+// means the letter isn't a network mapping — expected on local drives.
+#[link(name = "mpr")]
+extern "system" {
+    fn WNetGetConnectionW(
+        local_name: *const u16,
+        remote_name: *mut u16,
+        buffer_size: *mut u32,
+    ) -> u32;
+}
+
 #[derive(Serialize)]
 pub struct DriveInfo {
     pub letter: String,
+    /// Full scannable path. For local drives this is "C:\" — for network
+    /// mappings the renderer prefers the UNC form, so we emit that here when
+    /// we can resolve it (falls back to the letter on resolution failure).
+    pub path: String,
     pub label: String,
     #[serde(rename = "totalBytes")]
     pub total_bytes: u64,
@@ -92,6 +109,10 @@ pub struct DriveInfo {
     pub drive_type: &'static str,
     #[serde(rename = "mediaType")]
     pub media_type: &'static str,
+    /// UNC path that a mapped letter points to, e.g. "\\\\server\\share".
+    /// Empty for non-network drives. Useful for tooltips and recents UI.
+    #[serde(rename = "remotePath", skip_serializing_if = "String::is_empty")]
+    pub remote_path: String,
 }
 
 pub fn list_drives() -> Result<()> {
@@ -132,6 +153,7 @@ fn query_drive(root_w: &[u16]) -> Option<DriveInfo> {
     let drive_type = match drive_type_code {
         DRIVE_FIXED => "fixed",
         DRIVE_REMOVABLE => "removable",
+        DRIVE_REMOTE => "network",
         _ => return None,
     };
 
@@ -171,22 +193,66 @@ fn query_drive(root_w: &[u16]) -> Option<DriveInfo> {
 
     // Media type detection only makes sense for fixed drives. USB sticks
     // would technically work but the "SSD vs HDD" distinction isn't useful
-    // for removable storage.
+    // for removable storage, and the IOCTL fails on network volumes anyway.
     let media_type = if drive_type == "fixed" {
         detect_media_type(&letter)
     } else {
         "unknown"
     };
 
+    // For network mappings, resolve the underlying UNC path. We emit the UNC
+    // as the scannable `path` so the walker hits the share directly rather
+    // than going through the redirector twice. Failure leaves remote_path
+    // empty and falls back to the letter — the share might still be
+    // scannable through the mapped letter even if WNet can't read the map.
+    let (path, remote_path) = if drive_type == "network" {
+        match resolve_unc(&letter) {
+            Some(unc) => {
+                // Make sure UNC ends with a backslash so it's a valid scan root
+                let unc_root = if unc.ends_with('\\') { unc.clone() } else { format!("{}\\", unc) };
+                (unc_root, unc)
+            }
+            None => (format!("{}\\", letter), String::new()),
+        }
+    } else {
+        (format!("{}\\", letter), String::new())
+    };
+
     Some(DriveInfo {
         letter,
+        path,
         label,
         total_bytes,
         free_bytes,
         file_system,
         drive_type,
         media_type,
+        remote_path,
     })
+}
+
+/// For a mapped network letter like "Z:", returns the UNC it points to
+/// ("\\\\server\\share"). Returns None if the letter isn't a network
+/// mapping or if WNet can't enumerate it (e.g. credentials prompt pending).
+fn resolve_unc(letter: &str) -> Option<String> {
+    let local_w: Vec<u16> = OsStr::new(letter)
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let mut buf = [0u16; 1024];
+    let mut size: u32 = buf.len() as u32;
+    let rc = unsafe {
+        WNetGetConnectionW(local_w.as_ptr(), buf.as_mut_ptr(), &mut size)
+    };
+    if rc != 0 {
+        return None;
+    }
+    let unc = utf16_to_string(&buf);
+    if unc.is_empty() {
+        None
+    } else {
+        Some(unc)
+    }
 }
 
 /// Returns "ssd", "hdd", or "unknown" for the given drive letter ("C:").

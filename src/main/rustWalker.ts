@@ -55,6 +55,8 @@ export async function tryRustWalk(
   }
 
   return new Promise<FsNode | null>((resolve) => {
+    const t0 = Date.now();
+    console.log(`[scan] rust walker starting on ${rootPath}`);
     const child = spawn(binaryPath, ['--walk', rootPath], { windowsHide: true });
 
     const stdoutChunks: Buffer[] = [];
@@ -88,28 +90,40 @@ export async function tryRustWalk(
     });
 
     child.on('error', (err) => {
-      console.warn('[walker] spawn error:', err);
+      console.warn('[scan] rust walker spawn error:', err);
       resolve(null);
     });
 
     child.on('exit', (code) => {
+      const tWalkDone = Date.now();
+      console.log(
+        `[scan] rust walker spawn-to-exit: ${tWalkDone - t0} ms (exit code ${code})`
+      );
       if (code !== 0) {
         console.warn(
-          `[walker] exited with code ${code}\n${stderrTail.trim() || '(no stderr)'}`
+          `[scan] rust walker exited non-zero\n${stderrTail.trim() || '(no stderr)'}`
         );
         resolve(null);
         return;
       }
       try {
         const json = Buffer.concat(stdoutChunks).toString('utf8');
+        const tConcatDone = Date.now();
+        console.log(
+          `[scan] buffer concat: ${tConcatDone - tWalkDone} ms (${(json.length / 1024 / 1024).toFixed(1)} MB of JSON)`
+        );
         if (!json.trim()) {
-          console.warn('[walker] empty stdout');
+          console.warn('[scan] empty stdout');
           resolve(null);
           return;
         }
-        resolve(JSON.parse(json) as FsNode);
+        const parsed = JSON.parse(json) as FsNode;
+        const tParseDone = Date.now();
+        console.log(`[scan] JSON.parse: ${tParseDone - tConcatDone} ms`);
+        console.log(`[scan] rust walker total: ${tParseDone - t0} ms`);
+        resolve(parsed);
       } catch (e) {
-        console.warn('[walker] failed to parse output:', e);
+        console.warn('[scan] failed to parse output:', e);
         resolve(null);
       }
     });

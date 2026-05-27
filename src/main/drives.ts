@@ -8,13 +8,17 @@ const execAsync = promisify(exec);
 
 export interface DriveInfo {
   letter: string;
+  /** Full scannable path. "C:\\" on Windows, "\\\\server\\share\\" for
+   * network mappings, "/" or "/home" on Linux. */
   path: string;
   label: string;
   totalBytes: number;
   freeBytes: number;
   fileSystem: string;
-  driveType: 'fixed' | 'removable';
+  driveType: 'fixed' | 'removable' | 'network';
   mediaType: 'ssd' | 'hdd' | 'unknown';
+  /** UNC path a mapped letter points to. Empty/absent for local drives. */
+  remotePath?: string;
 }
 
 const isWindows = process.platform === 'win32';
@@ -71,8 +75,8 @@ async function tryRustList(): Promise<DriveInfo[] | null> {
 const PS_SCRIPT = `
 $ErrorActionPreference = 'SilentlyContinue'
 $result = @(Get-CimInstance -ClassName Win32_LogicalDisk |
-    Where-Object { $_.DriveType -in 2,3 } |
-    Select-Object DeviceID, VolumeName, Size, FreeSpace, FileSystem, DriveType)
+    Where-Object { $_.DriveType -in 2,3,4 } |
+    Select-Object DeviceID, VolumeName, Size, FreeSpace, FileSystem, DriveType, ProviderName)
 $result | ConvertTo-Json -Compress
 `;
 
@@ -86,16 +90,28 @@ async function powershellList(): Promise<DriveInfo[]> {
     const arr = Array.isArray(parsed) ? parsed : [parsed];
     return arr.filter(Boolean).map((d: any) => {
       const letter = d.DeviceID || '';
+      const driveType: DriveInfo['driveType'] =
+        d.DriveType === 4 ? 'network' : d.DriveType === 2 ? 'removable' : 'fixed';
+      const providerName = (d.ProviderName || '').trim();
+      // For network drives, prefer scanning the UNC directly (avoids the
+      // mapped-letter redirector hop). Fall back to the letter if the
+      // ProviderName field is missing for any reason.
+      const path =
+        driveType === 'network' && providerName
+          ? providerName.endsWith('\\') ? providerName : providerName + '\\'
+          : letter
+            ? letter + '\\'
+            : '';
       return {
         letter,
-        path: letter ? letter + '\\' : '',
+        path,
         label: (d.VolumeName || '').trim(),
         totalBytes: Number(d.Size) || 0,
         freeBytes: Number(d.FreeSpace) || 0,
         fileSystem: (d.FileSystem || '').trim(),
-        driveType:
-          d.DriveType === 2 ? ('removable' as const) : ('fixed' as const),
-        mediaType: 'unknown' as const
+        driveType,
+        mediaType: 'unknown' as const,
+        remotePath: providerName || undefined
       };
     });
   } catch {
