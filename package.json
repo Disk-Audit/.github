@@ -10,7 +10,9 @@
     "preview": "electron-vite preview",
     "package": "electron-vite build && electron-builder --win --x64 --publish never",
     "package:linux": "electron-vite build && electron-builder --linux --x64 --publish never",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx src/cli.ts",
+    "build:cli": "esbuild src/cli.ts --bundle --platform=node --outfile=out/cli.cjs --format=cjs"
   },
   "dependencies": {
     "@tabler/icons-webfont": "^3.0.0",
@@ -22,11 +24,13 @@
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
+    "esbuild": "^0.21.0",
     "electron": "^28.2.3",
     "electron-builder": "^24.13.0",
     "electron-vite": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vite": "^5.1.3"
   },
