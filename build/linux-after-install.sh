@@ -11,6 +11,7 @@ set -e
 INSTALL_DIR="/opt/Disk Analyzer"
 NEMO_ACTIONS_DIR="/usr/share/nemo/actions"
 NEMO_ACTION_FILE="disk-analyzer.nemo_action"
+LEDGEON_BIN="/usr/local/bin/ledgeon"
 
 # Install the Nemo action if the source file is present in our resources.
 # Doing it conditionally lets the same package work on systems without
@@ -19,6 +20,12 @@ if [ -f "$INSTALL_DIR/resources/$NEMO_ACTION_FILE" ]; then
     mkdir -p "$NEMO_ACTIONS_DIR"
     cp "$INSTALL_DIR/resources/$NEMO_ACTION_FILE" "$NEMO_ACTIONS_DIR/"
     chmod 0644 "$NEMO_ACTIONS_DIR/$NEMO_ACTION_FILE"
+fi
+
+# Install the ledgeon CLI so it's available from any terminal.
+if [ -f "$INSTALL_DIR/resources/ledgeon" ]; then
+    chmod 0755 "$INSTALL_DIR/resources/ledgeon"
+    ln -sf "$INSTALL_DIR/resources/ledgeon" "$LEDGEON_BIN"
 fi
 
 # Refresh the system desktop database so the MimeType=inode/directory

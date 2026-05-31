@@ -5,10 +5,13 @@
 set -e
 
 NEMO_ACTION_FILE="/usr/share/nemo/actions/disk-analyzer.nemo_action"
+LEDGEON_BIN="/usr/local/bin/ledgeon"
 
 if [ -f "$NEMO_ACTION_FILE" ]; then
     rm -f "$NEMO_ACTION_FILE"
 fi
+
+rm -f "$LEDGEON_BIN"
 
 # Refresh databases so the integration disappears immediately.
 if command -v update-desktop-database >/dev/null 2>&1; then
