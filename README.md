@@ -22,6 +22,25 @@ The rest of this README is for building from source.
 - Duplicate file finder — SHA-256 verified, safe deletion to Recycle Bin
 - Drive switcher — flip between drives without re-launching
 - System folders (Windows, /proc, /sys etc.) protected from accidental deletion
+- **CLI (`ledgeon`)** — analyze disk usage directly from any terminal, no GUI needed
+
+## CLI
+
+After installing the app, `ledgeon` is available system-wide from any terminal:
+
+```
+ledgeon C:\Users\dan
+ledgeon /home/dan --depth 4 --top 5 --min-size 100mb
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--depth N` | 3 | Levels deep to display |
+| `--top N` | 10 | Max entries per level, sorted by size |
+| `--min-size N` | — | Hide entries smaller than N (e.g. `50mb`, `1gb`) |
+| `--json` | — | Output raw JSON for scripting |
+
+No Node.js required — the CLI is a self-contained binary bundled with the installer.
 
 ## What you need to build it
 
@@ -82,7 +101,8 @@ Both write installers to `dist/`. The GitHub Actions workflow in `.github/workfl
 src/
 ├── main/         Electron main process (IPC, scanner orchestration, drive detection)
 ├── preload/      Renderer ↔ main bridge
-└── renderer/     React UI
+├── renderer/     React UI
+└── cli.ts        Standalone CLI (compiled to a self-contained binary by pkg)
 mft_scanner/      Rust scanner (Windows-only at the moment)
 build/            NSIS installer customisations
 .github/          CI workflow for cross-platform builds
