@@ -38,6 +38,6 @@
   DeleteRegKey HKCR "Drive\shell\DiskAnalyzer"
 
   ; Remove resources dir from system PATH
-  ExecWait 'powershell -NonInteractive -NoProfile -Command "[Environment]::SetEnvironmentVariable(\"PATH\", (([Environment]::GetEnvironmentVariable(\"PATH\", \"Machine\") -split \";\") | Where-Object { $_ -ne \"$INSTDIR\resources\" }) -join \";\", \"Machine\")"'
+  ExecWait 'powershell -NonInteractive -NoProfile -Command "[Environment]::SetEnvironmentVariable(\"PATH\", (([Environment]::GetEnvironmentVariable(\"PATH\", \"Machine\") -split \";\") | Where-Object { $$_ -ne \"$INSTDIR\resources\" }) -join \";\", \"Machine\")"'
   SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
 !macroend
