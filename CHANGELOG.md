@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.10
+**CLI (`ledgeon`)**
+
+- Live progress spinner during scan — shows file count, bytes scanned, and current path while waiting
+
+---
+
 ## v1.4.9
 **CLI (`ledgeon`)**
 
