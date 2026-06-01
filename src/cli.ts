@@ -289,7 +289,26 @@ async function main(): Promise<void> {
   }
 
   // Scan path (default: cwd) and print tree
-  const tree = await scan(targetPath, () => {});
+  const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  let spinnerIdx = 0;
+  const isTTY = !opts.json && process.stderr.isTTY;
+
+  function clearProgress() {
+    if (isTTY) process.stderr.write('\r\x1b[K');
+  }
+
+  const tree = await scan(targetPath, ({ bytes, files, currentPath }) => {
+    if (!isTTY) return;
+    const spin = spinnerFrames[spinnerIdx++ % spinnerFrames.length];
+    const cols = process.stderr.columns ?? 80;
+    const prefix = `${spin} ${files.toLocaleString()} files  ${formatSize(bytes)}  `;
+    const maxPath = cols - prefix.length - 1;
+    const truncated = currentPath.length > maxPath
+      ? '…' + currentPath.slice(-(maxPath - 1))
+      : currentPath;
+    process.stderr.write(`\r\x1b[K${prefix}${truncated}`);
+  });
+  clearProgress();
 
   if (opts.json) {
     console.log(JSON.stringify(tree, null, 2));
