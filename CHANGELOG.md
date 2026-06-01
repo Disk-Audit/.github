@@ -3,14 +3,10 @@
 ## v1.4.9
 **CLI (`ledgeon`)**
 
-- Added a command-line interface bundled with the installer — no extra software required
-- After installing, `ledgeon` is available from any terminal system-wide
-- Outputs a size-sorted tree of your disk usage directly in the terminal
-
-```
-ledgeon C:\Users\dan
-ledgeon /home/dan --depth 4 --top 5 --min-size 100mb
-```
+- Bundled with the installer — available system-wide from any terminal after install
+- `ledgeon` scans the current directory and prints a size-sorted tree
+- `ledgeon <path>` scans a specific drive or folder
+- `ledgeon list` shows all detected drives with used/total sizes
 
 | Flag | Default | Description |
 |------|---------|-------------|
